@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireApiAuth, requireApiRole, isErrorResponse } from "@/lib/api-auth";
+import { requireApiRole, getEffectiveUser, isErrorResponse } from "@/lib/api-auth";
 
 export async function GET(
-  _req: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const auth = await requireApiAuth();
+  const auth = await getEffectiveUser(req);
   if (isErrorResponse(auth)) return auth;
 
   const assignment = await prisma.assignment.findUnique({

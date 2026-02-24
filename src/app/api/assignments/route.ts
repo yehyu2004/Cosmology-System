@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireApiAuth, requireApiRole, isErrorResponse } from "@/lib/api-auth";
+import { requireApiRole, getEffectiveUser, isErrorResponse } from "@/lib/api-auth";
 import { z } from "zod";
 
 const CreateAssignmentSchema = z.object({
@@ -14,8 +14,8 @@ const CreateAssignmentSchema = z.object({
   published: z.boolean().default(false),
 });
 
-export async function GET() {
-  const auth = await requireApiAuth();
+export async function GET(req: NextRequest) {
+  const auth = await getEffectiveUser(req);
   if (isErrorResponse(auth)) return auth;
 
   const isStaff = ["TA", "PROFESSOR", "ADMIN"].includes(auth.user.role);
@@ -28,13 +28,21 @@ export async function GET() {
       _count: { select: { submissions: true } },
       submissions: isStaff
         ? { where: { gradedAt: null }, select: { id: true } }
-        : false,
+        : {
+            where: { userId: auth.user.id },
+            select: { totalScore: true, gradedAt: true },
+          },
     },
   });
 
-  const data = assignments.map(({ submissions: ungradedSubs, ...rest }) => ({
+  const data = assignments.map(({ submissions, ...rest }) => ({
     ...rest,
-    ungradedCount: Array.isArray(ungradedSubs) ? ungradedSubs.length : 0,
+    ungradedCount: isStaff && Array.isArray(submissions) ? submissions.length : 0,
+    ...(!isStaff && {
+      mySubmission: Array.isArray(submissions) && submissions.length > 0
+        ? submissions[0]
+        : null,
+    }),
   }));
 
   return NextResponse.json({ data });
