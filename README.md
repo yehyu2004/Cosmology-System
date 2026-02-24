@@ -48,11 +48,11 @@ Reports are graded by GPT-4o with a structured rubric tailored to anime-cosmolog
 
 | Category | Points | Focus |
 |----------|--------|-------|
-| Anime Introduction | 15 | Plot summary, setting, genuine familiarity |
-| Cosmology in the Anime | 25 | Specific cosmological concepts identified in the anime |
-| Cosmological Concepts Learned | 40 | Real science beyond the anime, depth and accuracy |
-| References | 10 | 2-3+ cosmology/astronomy sources |
-| Writing Quality | 10 | Clarity, flow, structure |
+| Anime Introduction | 10 | Plot summary, themes, genuine familiarity |
+| Cosmology-Anime Connection | 30 | Specific cosmological concepts tied to scenes |
+| Cosmological Concepts | 30 | Real science explained accurately, beyond anime |
+| References | 15 | Credible sources, proper citations |
+| Writing Quality | 15 | Structure, flow, grammar |
 
 The AI grader uses an MIT professor persona — knowledgeable, direct, constructive. It also checks for proper use of significant figures in any numerical values. TAs review all AI suggestions before finalizing grades.
 
