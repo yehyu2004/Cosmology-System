@@ -1,0 +1,113 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TA
+  PROFESSOR
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(STUDENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts           Account[]
+  sessions           Session[]
+  submissions        Submission[]
+  gradedSubmissions  Submission[]   @relation("GradedBy")
+  createdAssignments Assignment[]   @relation("CreatedBy")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Assignment {
+  id           String    @id @default(cuid())
+  title        String
+  description  String?   @db.Text
+  dueDate      DateTime?
+  totalPoints  Decimal   @default(100) @db.Decimal(10, 2)
+  published    Boolean   @default(false)
+  reportNumber Int
+  rubric       String?   @db.Text
+  pdfUrl       String?
+  createdById  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  createdBy   User         @relation("CreatedBy", fields: [createdById], references: [id])
+  submissions Submission[]
+
+  @@index([createdById])
+  @@index([published])
+}
+
+model Submission {
+  id           String    @id @default(cuid())
+  assignmentId String
+  userId       String
+  fileUrl      String?
+  fileName     String?
+  submittedAt  DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  totalScore   Decimal?  @db.Decimal(10, 2)
+  gradedAt     DateTime?
+  gradedById   String?
+  feedback     String?   @db.Text
+  aiFeedback   String?   @db.Text
+  aiScore      Decimal?  @db.Decimal(10, 2)
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gradedBy   User?      @relation("GradedBy", fields: [gradedById], references: [id])
+
+  @@unique([assignmentId, userId])
+  @@index([userId])
+  @@index([assignmentId])
+}
