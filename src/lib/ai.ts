@@ -34,7 +34,7 @@ ${SCORING_GUIDELINES}
 Max Points: ${maxPoints}
 
 Student Report Content:
-${reportText.slice(0, 15000)}
+${reportText.slice(0, 50000)}
 
 Grade this report and provide:
 1. A numeric score (0 to ${maxPoints})
