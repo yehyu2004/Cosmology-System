@@ -107,6 +107,35 @@ prisma/
 - Stored locally in `public/uploads/` for development
 - Before production: switch to Vercel Blob or S3
 
+## Pre-Deployment Security TODOs
+
+These MUST be resolved before deploying to production. Fix them when setting up the production environment.
+
+### 1. Move uploads out of `public/` (CRITICAL)
+Student PDFs in `public/uploads/` are served as unauthenticated static files — anyone with the URL can download them. Fix:
+- Move upload directory from `public/uploads/` to a non-public location (e.g., `storage/uploads/`)
+- Create an authenticated API route `src/app/api/files/[...path]/route.ts` that checks session + ownership before streaming the file
+- OR migrate to Vercel Blob / S3 with signed URLs
+- Update `src/app/api/upload/route.ts` (write path) and `src/app/api/grading/route.ts` (read path)
+- Update all frontend `<a href={fileUrl}>` links to use the new authenticated route
+
+### 2. Upgrade Next.js (HIGH)
+`next@14.2.35` has 14 high-severity vulnerabilities (DoS via Image Optimizer, HTTP request deserialization). Upgrade to `next@15.5.10+` or latest. This may require updating `eslint-config-next` and other dependencies.
+
+### 3. Clean PII from git history (MEDIUM)
+Commits `c589026` and `4922bfb` contain hardcoded user IDs, email addresses, and a test JWT secret in deleted files (`tests/`, `prisma/seed.ts`). If this repo is public, rewrite history:
+```bash
+pip install git-filter-repo
+git filter-repo --path tests/ --path prisma/seed.ts --invert-paths
+git push --force
+```
+
+### 4. Add HSTS header in production (LOW)
+Once HTTPS is confirmed, add to `next.config.mjs` headers:
+```js
+{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" }
+```
+
 ## Build & Deploy
 Always run `npx tsc --noEmit` after making changes to catch type errors. Vercel deployments fail on type errors.
 
