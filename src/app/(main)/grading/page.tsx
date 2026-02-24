@@ -35,6 +35,47 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CATEGORY_META } from "@/lib/grading-rubric";
+import type { CategoryKey } from "@/lib/grading-rubric";
+
+interface AiCategoryScore {
+  score: number;
+  maxScore: number;
+  rationale: string;
+}
+
+type AiCategoryBreakdown = Record<CategoryKey, AiCategoryScore> | null;
+
+/**
+ * Parse aiFeedback — handles both structured JSON (new) and plain text (old submissions).
+ * Returns { categories, feedback } or { categories: null, feedback: string }.
+ */
+function parseAiFeedback(raw: string | null): {
+  categories: AiCategoryBreakdown;
+  feedback: string;
+} {
+  if (!raw) return { categories: null, feedback: "" };
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed.categories && typeof parsed.categories === "object") {
+      return {
+        categories: parsed.categories as Record<CategoryKey, AiCategoryScore>,
+        feedback: parsed.feedback || "",
+      };
+    }
+    return { categories: null, feedback: raw };
+  } catch {
+    // Old plain-text format
+    return { categories: null, feedback: raw };
+  }
+}
+
+function scoreColor(score: number, max: number): string {
+  const pct = max > 0 ? score / max : 0;
+  if (pct >= 0.8) return "bg-emerald-500";
+  if (pct >= 0.6) return "bg-amber-500";
+  return "bg-red-500";
+}
 
 interface Assignment {
   id: string;
@@ -133,7 +174,8 @@ export default function GradingPage() {
     } else if (sub.aiScore != null && sub.aiFeedback) {
       // AI already ran — pre-fill with AI suggestions
       setScore(String(Number(sub.aiScore)));
-      setFeedback(sub.aiFeedback);
+      const { feedback: aiFb } = parseAiFeedback(sub.aiFeedback);
+      setFeedback(aiFb);
     } else {
       setScore("");
       setFeedback("");
@@ -168,24 +210,31 @@ export default function GradingPage() {
         return;
       }
 
-      setScore(String(data.data.score));
-      setFeedback(data.data.feedback);
+      const aiResult = data.data;
+      setScore(String(aiResult.score));
+      setFeedback(aiResult.feedback);
+
+      // Store structured JSON for category breakdown
+      const structuredFeedback = JSON.stringify({
+        categories: aiResult.categories,
+        feedback: aiResult.feedback,
+      });
 
       // Update the submission in the list with AI results
       setSelectedSubmission((prev) =>
         prev?.id === submissionId
-          ? { ...prev, aiScore: data.data.score, aiFeedback: data.data.feedback }
+          ? { ...prev, aiScore: aiResult.score, aiFeedback: structuredFeedback }
           : prev
       );
       setSubmissions((prev) =>
         prev.map((s) =>
           s.id === submissionId
-            ? { ...s, aiScore: data.data.score, aiFeedback: data.data.feedback }
+            ? { ...s, aiScore: aiResult.score, aiFeedback: structuredFeedback }
             : s
         )
       );
 
-      toast.success("AI grading complete — review the suggestions below");
+      toast.success("AI grading saved — review the suggestions below");
     } catch (err) {
       if (aiAbortRef.current !== submissionId) return;
       console.error("[grading:ai-assist]", { error: err instanceof Error ? err.message : String(err) });
@@ -201,19 +250,8 @@ export default function GradingPage() {
     }
   }, []);
 
-  // Auto-trigger AI grading for ungraded submissions with a file
+  // Cancel AI grading if user navigates away from the submission
   useEffect(() => {
-    if (
-      selectedSubmission &&
-      !selectedSubmission.gradedAt &&
-      selectedSubmission.fileUrl &&
-      selectedSubmission.aiScore == null &&
-      !selectedSubmission.aiFeedback &&
-      !aiLoading
-    ) {
-      runAiGrading(selectedSubmission.id);
-    }
-    // Cancel if user navigates away
     return () => {
       if (aiAbortRef.current && aiAbortRef.current !== selectedSubmission?.id) {
         aiAbortRef.current = null;
@@ -643,9 +681,17 @@ export default function GradingPage() {
                     {/* Grade Card */}
                     <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
                       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                          Grade
-                        </h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            Grade
+                          </h4>
+                          {selectedSubmission.aiScore != null && !aiLoading && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">
+                              <Sparkles className="w-2.5 h-2.5" />
+                              AI: {Number(selectedSubmission.aiScore)}/{maxPoints}
+                            </span>
+                          )}
+                        </div>
                         <Button
                           variant="outline"
                           size="sm"
@@ -654,7 +700,7 @@ export default function GradingPage() {
                           className="gap-1.5"
                         >
                           <Sparkles className="w-3.5 h-3.5" />
-                          {aiLoading ? "Running..." : "Re-run AI"}
+                          {aiLoading ? "Running..." : selectedSubmission.aiScore != null ? "Re-run AI" : "Run AI"}
                         </Button>
                       </div>
 
@@ -683,14 +729,12 @@ export default function GradingPage() {
                                 { key: "extracting" as const, icon: BookOpen, label: "Extracting text from PDF..." },
                                 { key: "analyzing" as const, icon: Brain, label: "Analyzing cosmological content..." },
                                 { key: "generating" as const, icon: MessageSquare, label: "Writing feedback..." },
-                              ]).map((step, i) => {
+                              ]).map((step) => {
                                 const phases = ["extracting", "analyzing", "generating"] as const;
                                 const currentIdx = aiPhase ? phases.indexOf(aiPhase) : -1;
                                 const stepIdx = phases.indexOf(step.key);
                                 const isActive = stepIdx === currentIdx;
                                 const isDone = stepIdx < currentIdx;
-                                const isPending = stepIdx > currentIdx;
-
                                 return (
                                   <div
                                     key={step.key}
@@ -731,6 +775,53 @@ export default function GradingPage() {
                           </div>
                         </div>
                       )}
+
+                      {/* AI Category Breakdown */}
+                      {(() => {
+                        const { categories } = parseAiFeedback(selectedSubmission.aiFeedback);
+                        if (!categories || aiLoading) return null;
+                        return (
+                          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2.5">
+                              AI Category Breakdown
+                            </p>
+                            <div className="space-y-2">
+                              {CATEGORY_META.map((meta) => {
+                                const cat = categories[meta.key];
+                                if (!cat) return null;
+                                const pct = meta.maxScore > 0 ? (cat.score / meta.maxScore) * 100 : 0;
+                                return (
+                                  <div key={meta.key} className="group">
+                                    <div className="flex items-center justify-between text-xs mb-0.5">
+                                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                                        {meta.label}
+                                      </span>
+                                      <span className="font-semibold text-gray-900 dark:text-gray-100">
+                                        {cat.score}/{meta.maxScore}
+                                      </span>
+                                    </div>
+                                    <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full transition-all ${scoreColor(cat.score, meta.maxScore)}`}
+                                        style={{ width: `${pct}%` }}
+                                      />
+                                    </div>
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 hidden group-hover:block">
+                                      {cat.rationale}
+                                    </p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-gray-100 dark:border-gray-800">
+                              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Total</span>
+                              <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                                {selectedSubmission.aiScore != null ? Number(selectedSubmission.aiScore) : "—"}/{maxPoints}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       <div className="p-4 space-y-4">
                         <div>
