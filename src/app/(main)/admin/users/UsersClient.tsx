@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Users, Shield, GraduationCap, BookOpen, ShieldCheck, UserCheck } from "lucide-react";
+import { Search, Users, Shield, GraduationCap, BookOpen, ShieldCheck, UserCheck, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
@@ -21,7 +21,10 @@ interface User {
 interface Props {
   users: User[];
   currentUserId: string;
+  currentUserRole: Role;
 }
+
+const ROLE_RANK: Record<Role, number> = { STUDENT: 0, TA: 1, PROFESSOR: 2, ADMIN: 3 };
 
 const ROLES: Role[] = ["STUDENT", "TA", "PROFESSOR", "ADMIN"];
 
@@ -56,14 +59,17 @@ const FILTER_TABS: { label: string; value: Role | "ALL"; icon: React.ElementType
   { label: "Admins", value: "ADMIN", icon: ShieldCheck },
 ];
 
-export default function UsersClient({ users: initialUsers, currentUserId }: Props) {
+export default function UsersClient({ users: initialUsers, currentUserId, currentUserRole }: Props) {
   const router = useRouter();
   const [users, setUsers] = useState(initialUsers);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<Role | "ALL">("ALL");
   const [updating, setUpdating] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [impersonating, setImpersonating] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  const canDelete = (targetRole: Role) => ROLE_RANK[currentUserRole] > ROLE_RANK[targetRole];
 
   const filtered = users.filter((u) => {
     const matchesSearch =
@@ -105,6 +111,31 @@ export default function UsersClient({ users: initialUsers, currentUserId }: Prop
       setFeedback({ type: "error", message: err instanceof Error ? err.message : "Failed to update role" });
     } finally {
       setUpdating(null);
+      setTimeout(() => setFeedback(null), 3000);
+    }
+  }
+
+  async function handleDeleteUser(userId: string, userName: string) {
+    if (!confirm(`Delete user "${userName}"? This will also remove their submissions and assignments. This cannot be undone.`)) return;
+
+    setDeleting(userId);
+    setFeedback(null);
+    try {
+      const res = await fetch("/api/users", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete user");
+      }
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      setFeedback({ type: "success", message: `User "${userName}" deleted` });
+    } catch (err) {
+      setFeedback({ type: "error", message: err instanceof Error ? err.message : "Failed to delete user" });
+    } finally {
+      setDeleting(null);
       setTimeout(() => setFeedback(null), 3000);
     }
   }
@@ -154,8 +185,8 @@ export default function UsersClient({ users: initialUsers, currentUserId }: Prop
 
       {/* Filter Tabs */}
       <div
-        className="animate-fade-in flex flex-wrap gap-2"
-        style={{ animationDelay: "80ms", opacity: 0 }}
+        className="animate-fade-in flex gap-2 overflow-x-auto pb-1 scrollbar-none"
+        style={{ animationDelay: "80ms" }}
       >
         {FILTER_TABS.map((tab) => {
           const isActive = roleFilter === tab.value;
@@ -164,9 +195,9 @@ export default function UsersClient({ users: initialUsers, currentUserId }: Prop
             <button
               key={tab.value}
               onClick={() => setRoleFilter(tab.value)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
                 isActive
-                  ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"
+                  ? "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300"
                   : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
               }`}
             >
@@ -181,7 +212,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: Prop
       {/* Search */}
       <div
         className="animate-fade-in relative"
-        style={{ animationDelay: "160ms", opacity: 0 }}
+        style={{ animationDelay: "160ms" }}
       >
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
@@ -189,15 +220,18 @@ export default function UsersClient({ users: initialUsers, currentUserId }: Prop
           placeholder="Search by name or email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
         />
       </div>
 
       {/* User Table */}
       <div
         className="animate-fade-in card-minimal overflow-hidden"
-        style={{ animationDelay: "240ms", opacity: 0 }}
+        style={{ animationDelay: "240ms" }}
       >
+        <p className="px-5 py-2 text-xs text-gray-400 dark:text-gray-500 md:hidden">
+          Swipe to see more columns
+        </p>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -249,7 +283,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: Prop
                         <div className="flex items-center gap-3">
                           <Avatar className="w-8 h-8">
                             <AvatarImage src={user.image || undefined} />
-                            <AvatarFallback className="text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300">
+                            <AvatarFallback className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
                               {initials}
                             </AvatarFallback>
                           </Avatar>
@@ -274,7 +308,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: Prop
                         </p>
                       </td>
                       <td className="px-5 py-3">
-                        {isSelf ? (
+                        {isSelf || currentUserRole !== "ADMIN" ? (
                           <Badge className={`${config.bg} ${config.color} text-xs`}>
                             {config.label}
                           </Badge>
@@ -283,7 +317,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: Prop
                             value={user.role}
                             onChange={(e) => handleRoleChange(user.id, e.target.value as Role)}
                             disabled={updating === user.id}
-                            className="text-sm rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 disabled:opacity-50 transition-colors"
+                            className="text-sm rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 transition-colors"
                           >
                             {ROLES.map((r) => (
                               <option key={r} value={r}>
@@ -299,17 +333,30 @@ export default function UsersClient({ users: initialUsers, currentUserId }: Prop
                         </p>
                       </td>
                       <td className="px-5 py-3">
-                        {!isSelf && (
-                          <button
-                            onClick={() => handleImpersonate(user.id)}
-                            disabled={impersonating === user.id}
-                            title={`View as ${user.name || user.email}`}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50"
-                          >
-                            <UserCheck className="w-3.5 h-3.5" />
-                            Impersonate
-                          </button>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {!isSelf && currentUserRole === "ADMIN" && (
+                            <button
+                              onClick={() => handleImpersonate(user.id)}
+                              disabled={impersonating === user.id}
+                              title={`View as ${user.name || user.email}`}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50"
+                            >
+                              <UserCheck className="w-3.5 h-3.5" />
+                              Impersonate
+                            </button>
+                          )}
+                          {!isSelf && canDelete(user.role) && (
+                            <button
+                              onClick={() => handleDeleteUser(user.id, user.name || user.email)}
+                              disabled={deleting === user.id}
+                              title={`Delete ${user.name || user.email}`}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              {deleting === user.id ? "Deleting..." : "Delete"}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

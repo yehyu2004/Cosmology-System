@@ -9,7 +9,7 @@ export default async function AdminUsersPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const userRole = (session.user as any).role as string;
-  if (userRole !== "ADMIN") redirect("/dashboard");
+  if (!["TA", "PROFESSOR", "ADMIN"].includes(userRole)) redirect("/dashboard");
 
   const users = await prisma.user.findMany({
     select: {
@@ -24,5 +24,5 @@ export default async function AdminUsersPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  return <UsersClient users={JSON.parse(JSON.stringify(users))} currentUserId={session.user.id!} />;
+  return <UsersClient users={JSON.parse(JSON.stringify(users))} currentUserId={session.user.id!} currentUserRole={userRole as "STUDENT" | "TA" | "PROFESSOR" | "ADMIN"} />;
 }

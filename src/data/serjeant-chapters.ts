@@ -23,7 +23,7 @@ export const textbookParts: Part[] = [
   {
     number: 1,
     title: "The Expanding Universe",
-    color: "from-blue-500 to-indigo-600",
+    color: "from-blue-500 to-blue-600",
     bgClass: "bg-blue-500/10 dark:bg-blue-500/20",
     iconColor: "text-blue-500",
     chapters: [

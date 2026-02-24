@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Upload, FileText, CheckCircle2, ArrowLeft, Trash2 } from "lucide-react";
+import { Upload, FileText, CheckCircle2, ArrowLeft, Trash2, RotateCcw } from "lucide-react";
 import { useEffectiveRole } from "@/components/providers/EffectiveRoleContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +30,7 @@ interface Submission {
   gradedAt: string | null;
   feedback: string | null;
   gradedBy: { name: string | null } | null;
+  returnedAt: string | null;
 }
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
@@ -141,7 +142,7 @@ export default function AssignmentDetailPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
       </div>
     );
   }
@@ -165,7 +166,7 @@ export default function AssignmentDetailPage() {
           </div>
           <p className="text-sm text-gray-500 mt-1">
             {assignment.dueDate
-              ? `Due: ${new Date(assignment.dueDate).toLocaleString()}`
+              ? `Due: ${new Date(assignment.dueDate).toLocaleString("en-US")}`
               : "No due date"}{" "}
             · {Number(assignment.totalPoints)} points
           </p>
@@ -191,14 +192,28 @@ export default function AssignmentDetailPage() {
           <CardContent>
             {submission ? (
               <div className="space-y-4">
+                {submission.returnedAt && !submission.gradedAt && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800">
+                    <RotateCcw className="w-5 h-5 text-amber-600 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                        Returned by TA
+                      </p>
+                      <p className="text-xs text-amber-600 dark:text-amber-400">
+                        You may review your previous submission and re-upload if needed.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800">
                   <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-green-800 dark:text-green-300">
-                      Submitted: {submission.fileName}
+                      {submission.returnedAt && !submission.gradedAt ? "Previous submission" : "Submitted"}: {submission.fileName}
                     </p>
                     <p className="text-xs text-green-600 dark:text-green-400">
-                      {new Date(submission.submittedAt).toLocaleString()}
+                      {new Date(submission.submittedAt).toLocaleString("en-US")}
                     </p>
                   </div>
                   {submission.fileUrl && (

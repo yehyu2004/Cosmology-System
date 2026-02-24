@@ -1,4 +1,4 @@
-# Cosmology TA Platform
+# Cosmo
 
 A teaching assistant platform for an Observational Cosmology course at NTHU. Students write reports connecting anime/science fiction to real cosmology, and TAs grade them with AI assistance.
 
@@ -39,6 +39,8 @@ npm run dev
 ### Assignment & Submission System
 - TAs/professors create assignments with customizable rubrics
 - Students upload PDF reports (one submission per student per assignment)
+- "Return to student" workflow — TAs can return submissions for revision, students see a notification and can re-upload
+- Students see grade status badges (score or "Pending") on the assignments list
 - File uploads stored in `public/uploads/` (development) — switch to Vercel Blob or S3 for production
 
 ### AI-Assisted Grading
@@ -56,13 +58,31 @@ The AI grader uses an MIT professor persona — knowledgeable, direct, construct
 
 The rubric and grading standards are defined in `src/lib/grading-rubric.ts` and can be customized per assignment.
 
+### Grade Export
+Staff can export grades as CSV from the grading page — per-assignment or across all assignments. Includes student name, email, student ID, score, and timestamps.
+
 ### Cosmology Simulations
 Eight interactive simulations based on Serjeant's *Observational Cosmology* textbook, rendered with Plotly.js and Canvas.
 
+### Collapsible Sidebar & Theme Toggle
+- Desktop sidebar collapses to a narrow icon rail for more workspace
+- Built-in dark/light mode toggle in the sidebar
+
 ### Role-Based Access
-- **STUDENT**: View assignments, submit reports, see grades
-- **TA**: Grade submissions, create assignments, AI grading tools
-- **PROFESSOR / ADMIN**: Full access, user management
+- **STUDENT**: View assignments, submit reports, see grades and feedback
+- **TA**: Grade submissions, create assignments, AI grading tools, view user list, export grades
+- **PROFESSOR**: All TA capabilities plus user management
+- **ADMIN**: Full access, user management with role changes, impersonation, user deletion
+
+### User Management
+- TAs and professors can view the user list; only admins can change roles or impersonate
+- Role-hierarchical user deletion — you can only delete users with a lower role than yours
+- Cascade deletes ensure no orphaned records when a user is removed
+
+### Loading & Error States
+- Skeleton loading screens for all routes (Next.js Suspense boundaries)
+- Error boundary with retry for the main layout
+- Respects `prefers-reduced-motion` for accessibility
 
 ## Project Structure
 
@@ -74,13 +94,16 @@ src/
       assignments/       # Assignment list, detail, create
       dashboard/         # Student/TA dashboard
       grading/           # Grading interface
-      admin/             # Admin panel
+      grades/            # Student grades view
+      admin/             # User management panel
       settings/          # User settings
+      simulations/       # Interactive cosmology simulations
     api/                 # API routes
       assignments/       # Assignment CRUD
-      grading/           # Submission grading + AI
+      grading/           # Submission grading + AI + CSV export
       submissions/       # Student submissions
       upload/            # File upload
+      users/             # User management + deletion
   components/
     ui/                  # shadcn/ui components
     layout/              # Sidebar, Topbar
@@ -90,6 +113,7 @@ src/
     prisma.ts            # Prisma client singleton
     ai.ts                # OpenAI grading integration
     grading-rubric.ts    # Default rubric, scoring guidelines, AI prompt
+    pdf-to-images.ts     # Server-side PDF to JPEG conversion
   data/
     serjeant-chapters.ts # Textbook chapter/simulation data
 prisma/

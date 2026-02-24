@@ -17,6 +17,7 @@ import {
   BookOpen,
   Brain,
   MessageSquare,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -357,7 +358,7 @@ export default function GradingPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
       </div>
     );
   }
@@ -472,6 +473,20 @@ export default function GradingPage() {
               </SelectContent>
             </Select>
 
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => {
+                const url = `/api/grading/export?assignmentId=${selectedAssignmentId}`;
+                window.open(url, "_blank");
+              }}
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Export CSV</span>
+              <span className="sm:hidden">Export</span>
+            </Button>
+
             <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
               <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
                 <CheckCircle2 className="h-3 w-3" />
@@ -499,7 +514,7 @@ export default function GradingPage() {
         </div>
       ) : loadingSubmissions ? (
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
         </div>
       ) : (
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:h-[calc(100vh-16rem)]">
@@ -661,20 +676,20 @@ export default function GradingPage() {
                         href={selectedSubmission.fileUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-4 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 transition-colors group"
+                        className="flex items-center gap-3 p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors group"
                       >
-                        <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center shrink-0">
-                          <FileText className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                        <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center shrink-0">
+                          <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-indigo-900 dark:text-indigo-200 truncate">
+                          <p className="text-sm font-medium text-blue-900 dark:text-blue-200 truncate">
                             {selectedSubmission.fileName || "Student Report"}
                           </p>
-                          <p className="text-xs text-indigo-600 dark:text-indigo-400">
+                          <p className="text-xs text-blue-600 dark:text-blue-400">
                             Click to open PDF in new tab
                           </p>
                         </div>
-                        <ExternalLink className="h-4 w-4 text-indigo-400 dark:text-indigo-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 shrink-0" />
+                        <ExternalLink className="h-4 w-4 text-blue-400 dark:text-blue-500 group-hover:text-blue-600 dark:group-hover:text-blue-300 shrink-0" />
                       </a>
                     )}
 
@@ -686,7 +701,7 @@ export default function GradingPage() {
                             Grade
                           </h4>
                           {selectedSubmission.aiScore != null && !aiLoading && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
                               <Sparkles className="w-2.5 h-2.5" />
                               AI: {Number(selectedSubmission.aiScore)}/{maxPoints}
                             </span>
@@ -709,10 +724,10 @@ export default function GradingPage() {
                         <div className="px-4 py-6 border-b border-gray-100 dark:border-gray-800">
                           <div className="flex flex-col items-center text-center space-y-4">
                             <div className="relative">
-                              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/40 dark:to-violet-900/40 flex items-center justify-center">
-                                <Sparkles className="w-7 h-7 text-indigo-500 dark:text-indigo-400 animate-pulse" />
+                              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-100 to-violet-100 dark:from-blue-900/40 dark:to-violet-900/40 flex items-center justify-center">
+                                <Sparkles className="w-7 h-7 text-blue-500 dark:text-blue-400 animate-pulse" />
                               </div>
-                              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-indigo-500 animate-ping opacity-40" />
+                              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-500 animate-ping opacity-40" />
                             </div>
                             <div>
                               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -740,7 +755,7 @@ export default function GradingPage() {
                                     key={step.key}
                                     className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-500 ${
                                       isActive
-                                        ? "bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800"
+                                        ? "bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800"
                                         : isDone
                                           ? "bg-emerald-50/50 dark:bg-emerald-950/20"
                                           : ""
@@ -748,7 +763,7 @@ export default function GradingPage() {
                                   >
                                     <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors duration-500 ${
                                       isActive
-                                        ? "bg-indigo-500 text-white"
+                                        ? "bg-blue-500 text-white"
                                         : isDone
                                           ? "bg-emerald-500 text-white"
                                           : "bg-gray-100 dark:bg-gray-800 text-gray-400"
@@ -761,7 +776,7 @@ export default function GradingPage() {
                                     </div>
                                     <span className={`text-xs font-medium transition-colors duration-500 ${
                                       isActive
-                                        ? "text-indigo-700 dark:text-indigo-300"
+                                        ? "text-blue-700 dark:text-blue-300"
                                         : isDone
                                           ? "text-emerald-600 dark:text-emerald-400"
                                           : "text-gray-400 dark:text-gray-500"

@@ -37,7 +37,7 @@ export default function SimulationsPage() {
                   key={ch.simulation!.id}
                   href={`/simulations/${ch.simulation!.id}`}
                 >
-                  <Card className="h-full hover:border-indigo-500/30 transition-colors cursor-pointer">
+                  <Card className="h-full hover:border-blue-500/30 transition-colors cursor-pointer">
                     <CardContent className="flex gap-4 py-4">
                       <div
                         className={`flex items-center justify-center w-12 h-12 rounded-xl shrink-0 ${part.bgClass}`}

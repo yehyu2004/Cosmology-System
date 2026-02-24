@@ -17,7 +17,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "CosmoTA — Observational Cosmology",
+  title: "Cosmo — Observational Cosmology",
   description: "Teaching platform for Observational Cosmology",
 };
 

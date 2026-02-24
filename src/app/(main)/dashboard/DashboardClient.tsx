@@ -8,7 +8,6 @@ import {
   Clock,
   BookOpen,
   PlusCircle,
-  LayoutDashboard,
   Telescope,
   ClipboardCheck,
   BarChart3,
@@ -98,7 +97,7 @@ export default function DashboardClient({
           label: "Total Students",
           value: totalStudents,
           icon: Users,
-          href: "/assignments",
+          href: "/admin/users",
           color: "text-blue-600 dark:text-blue-400",
           bg: "bg-blue-50 dark:bg-blue-500/10",
         },
@@ -107,8 +106,8 @@ export default function DashboardClient({
           value: totalAssignments,
           icon: FileText,
           href: "/assignments",
-          color: "text-indigo-600 dark:text-indigo-400",
-          bg: "bg-indigo-50 dark:bg-indigo-500/10",
+          color: "text-blue-600 dark:text-blue-400",
+          bg: "bg-blue-50 dark:bg-blue-500/10",
         },
         {
           label: "To Grade",
@@ -125,8 +124,8 @@ export default function DashboardClient({
           value: totalAssignments,
           icon: FileText,
           href: "/assignments",
-          color: "text-indigo-600 dark:text-indigo-400",
-          bg: "bg-indigo-50 dark:bg-indigo-500/10",
+          color: "text-blue-600 dark:text-blue-400",
+          bg: "bg-blue-50 dark:bg-blue-500/10",
         },
         {
           label: "Submitted",
@@ -148,13 +147,6 @@ export default function DashboardClient({
 
   // Quick start actions
   const quickActions = [
-    {
-      label: "Dashboard",
-      description: "Overview & stats",
-      href: "/dashboard",
-      icon: LayoutDashboard,
-      roles: ["STUDENT", "TA", "PROFESSOR", "ADMIN"],
-    },
     {
       label: "Assignments",
       description: isStaff ? "Manage assignments" : "View & submit",
@@ -219,8 +211,8 @@ export default function DashboardClient({
             <Link
               key={card.label}
               href={card.href}
-              className="animate-fade-in card-minimal p-5 flex items-center gap-4 hover:shadow-md transition-shadow"
-              style={{ animationDelay: `${i * 80}ms`, opacity: 0 }}
+              className="animate-fade-in card-minimal p-5 flex items-center gap-4 hover:shadow-md active:scale-[0.98] transition-all"
+              style={{ animationDelay: `${i * 80}ms` }}
             >
               <div className={`flex items-center justify-center w-11 h-11 rounded-xl ${card.bg}`}>
                 <card.icon className={`w-5 h-5 ${card.color}`} />
@@ -244,11 +236,11 @@ export default function DashboardClient({
             <Link
               key={action.label}
               href={action.href}
-              className="animate-fade-in card-minimal p-4 flex flex-col gap-2 hover:shadow-md transition-shadow group"
-              style={{ animationDelay: `${(i + 3) * 80}ms`, opacity: 0 }}
+              className="animate-fade-in card-minimal p-4 flex flex-col gap-2 hover:shadow-md active:scale-[0.98] transition-all group"
+              style={{ animationDelay: `${(i + 3) * 80}ms` }}
             >
-              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/10 transition-colors">
-                <action.icon className="w-4.5 h-4.5 text-gray-600 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
+              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-blue-50 dark:group-hover:bg-blue-500/10 transition-colors">
+                <action.icon className="w-4.5 h-4.5 text-gray-600 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{action.label}</p>
@@ -266,7 +258,7 @@ export default function DashboardClient({
           {/* Left: Recent Submissions */}
           <div
             className="animate-fade-in card-minimal p-5"
-            style={{ animationDelay: `${(quickActions.length + 3) * 80}ms`, opacity: 0 }}
+            style={{ animationDelay: `${(quickActions.length + 3) * 80}ms` }}
           >
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
               <FileText className="w-4 h-4 text-gray-400" />
@@ -283,7 +275,7 @@ export default function DashboardClient({
                       className="flex items-center justify-between gap-3 group"
                     >
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                           {isStaff
                             ? sub.user.name || sub.user.email
                             : sub.assignment.title}
@@ -292,7 +284,7 @@ export default function DashboardClient({
                           {isStaff && (
                             <span>Report {sub.assignment.reportNumber} &middot; </span>
                           )}
-                          {new Date(sub.submittedAt).toLocaleDateString()}
+                          {new Date(sub.submittedAt).toLocaleDateString("en-US")}
                         </p>
                       </div>
                       <div className="shrink-0">
@@ -318,7 +310,7 @@ export default function DashboardClient({
           {/* Right: Deadlines (student) / Submission Status (staff) */}
           <div
             className="animate-fade-in card-minimal p-5"
-            style={{ animationDelay: `${(quickActions.length + 4) * 80}ms`, opacity: 0 }}
+            style={{ animationDelay: `${(quickActions.length + 4) * 80}ms` }}
           >
             {isStaff ? (
               <>
@@ -340,7 +332,7 @@ export default function DashboardClient({
                             className="flex items-center justify-between gap-3 group"
                           >
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                 Report {a.reportNumber}: {a.title}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -390,11 +382,11 @@ export default function DashboardClient({
                             className="flex items-center justify-between gap-3 group"
                           >
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                 {a.title}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Due {due.toLocaleDateString()} &middot;{" "}
+                                Due {due.toLocaleDateString("en-US")} &middot;{" "}
                                 {daysLeft <= 1 ? "Due tomorrow" : `${daysLeft} days left`}
                               </p>
                             </div>

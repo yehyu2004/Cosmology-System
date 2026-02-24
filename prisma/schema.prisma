@@ -82,7 +82,7 @@ model Assignment {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  createdBy   User         @relation("CreatedBy", fields: [createdById], references: [id])
+  createdBy   User         @relation("CreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
   submissions Submission[]
 
   @@index([createdById])
@@ -103,10 +103,11 @@ model Submission {
   feedback     String?   @db.Text
   aiFeedback   String?   @db.Text
   aiScore      Decimal?  @db.Decimal(10, 2)
+  returnedAt   DateTime?
 
   assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gradedBy   User?      @relation("GradedBy", fields: [gradedById], references: [id])
+  gradedBy   User?      @relation("GradedBy", fields: [gradedById], references: [id], onDelete: SetNull)
 
   @@unique([assignmentId, userId])
   @@index([userId])

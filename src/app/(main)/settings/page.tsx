@@ -80,7 +80,7 @@ export default function SettingsPage() {
           <div className="flex items-center gap-4">
             <Avatar className="w-16 h-16">
               <AvatarImage src={session?.user?.image || undefined} />
-              <AvatarFallback className="text-lg bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300">
+              <AvatarFallback className="text-lg bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
                 {initials}
               </AvatarFallback>
             </Avatar>

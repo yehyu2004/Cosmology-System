@@ -52,6 +52,7 @@ export async function POST(req: Request) {
       submittedAt: new Date(),
       aiScore: null,
       aiFeedback: null,
+      returnedAt: null,
     },
     create: {
       assignmentId,

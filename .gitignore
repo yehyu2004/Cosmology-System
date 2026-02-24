@@ -35,3 +35,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# screenshots & test artifacts
+*.png
+/test-results/
+/.playwright-mcp/
+
+# uploads
+/public/uploads/

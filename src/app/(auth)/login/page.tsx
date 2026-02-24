@@ -8,17 +8,17 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 relative overflow-hidden">
       <div className="absolute inset-0">
-        <div className="absolute top-20 left-20 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-20 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-20 right-20 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 w-full max-w-md mx-4">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 mb-4">
-            <Telescope className="w-8 h-8 text-indigo-400" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-4">
+            <Telescope className="w-8 h-8 text-blue-400" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">CosmoTA</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Cosmo</h1>
           <p className="text-gray-400">Observational Cosmology Platform</p>
           <p className="text-gray-500 text-sm mt-1">Stephen Serjeant — Cambridge</p>
         </div>
