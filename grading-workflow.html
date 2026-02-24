@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmo — Grading Rubric & Workflow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #ffffff;
+      color: #1e293b;
+      padding: 2.5rem 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .subtitle {
+      font-size: 0.9rem;
+      color: #64748b;
+      margin-bottom: 2.5rem;
+    }
+
+    /* Flow section */
+    .flow {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 2.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .flow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      min-width: 130px;
+      max-width: 160px;
+    }
+    .flow-step .icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .flow-step .label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+    .flow-step .desc {
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-top: 0.2rem;
+    }
+    .flow-arrow {
+      font-size: 1.25rem;
+      color: #cbd5e1;
+      flex-shrink: 0;
+    }
+    .step-blue .icon { background: #dbeafe; color: #2563eb; }
+    .step-purple .icon { background: #ede9fe; color: #7c3aed; }
+    .step-amber .icon { background: #fef3c7; color: #d97706; }
+    .step-green .icon { background: #d1fae5; color: #059669; }
+
+    /* Section headers */
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .section-desc {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-bottom: 1.25rem;
+    }
+    section { margin-bottom: 2.5rem; }
+
+    /* Rubric cards */
+    .rubric-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .rubric-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.25rem;
+      background: #fafbfc;
+    }
+    .rubric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    .rubric-name {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .rubric-max {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: white;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+    }
+    .rubric-question {
+      font-size: 0.8rem;
+      color: #64748b;
+      font-style: italic;
+      margin-bottom: 0.75rem;
+    }
+    .tier-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .tier {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+    .tier-score {
+      font-weight: 700;
+      min-width: 28px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .tier-bar {
+      width: 4px;
+      min-height: 18px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .tier-desc {
+      color: #475569;
+    }
+
+    /* Color coding for categories */
+    .cat-anime .rubric-max { background: #3b82f6; }
+    .cat-anime .tier-score { color: #3b82f6; }
+    .cat-anime .tier-bar { background: #3b82f6; }
+
+    .cat-connection .rubric-max { background: #8b5cf6; }
+    .cat-connection .tier-score { color: #8b5cf6; }
+    .cat-connection .tier-bar { background: #8b5cf6; }
+
+    .cat-concepts .rubric-max { background: #ec4899; }
+    .cat-concepts .tier-score { color: #ec4899; }
+    .cat-concepts .tier-bar { background: #ec4899; }
+
+    .cat-refs .rubric-max { background: #f59e0b; }
+    .cat-refs .tier-score { color: #f59e0b; }
+    .cat-refs .tier-bar { background: #f59e0b; }
+
+    .cat-writing .rubric-max { background: #10b981; }
+    .cat-writing .tier-score { color: #10b981; }
+    .cat-writing .tier-bar { background: #10b981; }
+
+    /* Weight bar */
+    .weight-bar {
+      display: flex;
+      height: 32px;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: white;
+    }
+    .weight-bar > div {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 0.5rem;
+    }
+
+    /* Overall scale */
+    .scale-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .scale-item {
+      flex: 1;
+      min-width: 120px;
+      padding: 0.6rem 0.75rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .scale-item .range {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .scale-item .grade-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      margin-top: 0.15rem;
+    }
+
+    /* Credible references */
+    .ref-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .ref-box {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    .ref-box h4 {
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+    }
+    .ref-yes { background: #d1fae5; border: 1px solid #a7f3d0; }
+    .ref-yes h4 { color: #065f46; }
+    .ref-no { background: #fee2e2; border: 1px solid #fecaca; }
+    .ref-no h4 { color: #991b1b; }
+
+    /* Key rules */
+    .rules-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .rules-list li {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      padding: 0.6rem 0.75rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .rules-list li strong { color: #1e293b; }
+  </style>
+</head>
+<body>
+
+  <h1>Cosmo Grading Rubric & Workflow</h1>
+  <p class="subtitle">Anime-cosmology report grading — AI suggests, TA finalizes</p>
+
+  <!-- Workflow overview -->
+  <section>
+    <h2>Workflow</h2>
+    <p class="section-desc">Every report goes through this pipeline. The TA always has final say.</p>
+    <div class="flow">
+      <div class="flow-step step-blue">
+        <div class="icon">&#128196;</div>
+        <div class="label">Student submits PDF</div>
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step step-purple">
+        <div class="icon">&#129302;</div>
+        <div class="label">AI grades report</div>
+        <div class="desc">Scores each category, writes feedback</div>
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step step-amber">
+        <div class="icon">&#128270;</div>
+        <div class="label">TA reviews</div>
+        <div class="desc">Edit scores & feedback, or override AI</div>
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step step-green">
+        <div class="icon">&#9989;</div>
+        <div class="label">Grade finalized</div>
+        <div class="desc">Student sees score + feedback</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Weight distribution -->
+  <section>
+    <h2>Point Distribution (100 total)</h2>
+    <p class="section-desc">How the 100 points are split across the 5 categories.</p>
+    <div class="weight-bar">
+      <div style="width:10%;background:#3b82f6;">10</div>
+      <div style="width:30%;background:#8b5cf6;">30</div>
+      <div style="width:30%;background:#ec4899;">30</div>
+      <div style="width:15%;background:#f59e0b;">15</div>
+      <div style="width:15%;background:#10b981;">15</div>
+    </div>
+    <div style="display:flex;font-size:0.7rem;color:#64748b;gap:0;">
+      <div style="width:10%;text-align:center;">Anime Intro</div>
+      <div style="width:30%;text-align:center;">Connection</div>
+      <div style="width:30%;text-align:center;">Concepts</div>
+      <div style="width:15%;text-align:center;">Refs</div>
+      <div style="width:15%;text-align:center;">Writing</div>
+    </div>
+  </section>
+
+  <!-- Detailed rubric -->
+  <section>
+    <h2>Detailed Rubric</h2>
+    <p class="section-desc">Each category is scored on fixed tiers. Between two tiers, always use the lower score.</p>
+
+    <div class="rubric-grid">
+      <!-- 1. Anime Introduction -->
+      <div class="rubric-card cat-anime">
+        <div class="rubric-header">
+          <span class="rubric-name">1. Anime Introduction</span>
+          <span class="rubric-max">10 pts</span>
+        </div>
+        <div class="rubric-question">Does the student show genuine familiarity with the anime/sci-fi work?</div>
+        <div class="tier-list">
+          <div class="tier"><span class="tier-score">10</span><div class="tier-bar"></div><span class="tier-desc">Names the work, summarizes plot in 3+ sentences, identifies cosmology-relevant themes</span></div>
+          <div class="tier"><span class="tier-score">8</span><div class="tier-bar"></div><span class="tier-desc">Names the work, reasonable summary, but misses key themes</span></div>
+          <div class="tier"><span class="tier-score">6</span><div class="tier-bar"></div><span class="tier-desc">Names the work with a brief 1-2 sentence summary</span></div>
+          <div class="tier"><span class="tier-score">4</span><div class="tier-bar"></div><span class="tier-desc">Mentions the work but only superficial or inaccurate synopsis</span></div>
+          <div class="tier"><span class="tier-score">2</span><div class="tier-bar"></div><span class="tier-desc">Barely mentions the work; no meaningful summary</span></div>
+          <div class="tier"><span class="tier-score">0</span><div class="tier-bar"></div><span class="tier-desc">Missing or completely off-topic</span></div>
+        </div>
+      </div>
+
+      <!-- 2. Cosmology-Anime Connection -->
+      <div class="rubric-card cat-connection">
+        <div class="rubric-header">
+          <span class="rubric-name">2. Cosmology-Anime Connection</span>
+          <span class="rubric-max">30 pts</span>
+        </div>
+        <div class="rubric-question">Does the student tie specific cosmological concepts to specific scenes in the anime?</div>
+        <div class="tier-list">
+          <div class="tier"><span class="tier-score">30</span><div class="tier-bar"></div><span class="tier-desc">3+ cosmological concepts identified with concrete scene references</span></div>
+          <div class="tier"><span class="tier-score">25</span><div class="tier-bar"></div><span class="tier-desc">2 concepts with scene references, or 3+ concepts without specific scenes</span></div>
+          <div class="tier"><span class="tier-score">20</span><div class="tier-bar"></div><span class="tier-desc">1-2 concepts with some scene context</span></div>
+          <div class="tier"><span class="tier-score">15</span><div class="tier-bar"></div><span class="tier-desc">1 concept but the connection is vague or superficial</span></div>
+          <div class="tier"><span class="tier-score">10</span><div class="tier-bar"></div><span class="tier-desc">Mentions cosmology in passing without tying it to the anime</span></div>
+          <div class="tier"><span class="tier-score">5</span><div class="tier-bar"></div><span class="tier-desc">Attempts a connection but it is incorrect or incoherent</span></div>
+          <div class="tier"><span class="tier-score">0</span><div class="tier-bar"></div><span class="tier-desc">No connection between the anime and cosmology</span></div>
+        </div>
+      </div>
+
+      <!-- 3. Cosmological Concepts -->
+      <div class="rubric-card cat-concepts">
+        <div class="rubric-header">
+          <span class="rubric-name">3. Cosmological Concepts</span>
+          <span class="rubric-max">30 pts</span>
+        </div>
+        <div class="rubric-question">Does the student explain real cosmology accurately, beyond what the anime shows?</div>
+        <div class="tier-list">
+          <div class="tier"><span class="tier-score">30</span><div class="tier-bar"></div><span class="tier-desc">3+ real concepts explained accurately, goes beyond anime-level discussion</span></div>
+          <div class="tier"><span class="tier-score">25</span><div class="tier-bar"></div><span class="tier-desc">2-3 concepts explained accurately with some depth</span></div>
+          <div class="tier"><span class="tier-score">20</span><div class="tier-bar"></div><span class="tier-desc">1-2 concepts explained correctly at a basic level</span></div>
+          <div class="tier"><span class="tier-score">15</span><div class="tier-bar"></div><span class="tier-desc">Attempts to explain concepts but contains minor inaccuracies</span></div>
+          <div class="tier"><span class="tier-score">10</span><div class="tier-bar"></div><span class="tier-desc">Contains significant inaccuracies or misunderstandings</span></div>
+          <div class="tier"><span class="tier-score">5</span><div class="tier-bar"></div><span class="tier-desc">Mentions concepts by name only, with no real explanation</span></div>
+          <div class="tier"><span class="tier-score">0</span><div class="tier-bar"></div><span class="tier-desc">No cosmological content beyond the anime discussion</span></div>
+        </div>
+      </div>
+
+      <!-- 4. References -->
+      <div class="rubric-card cat-refs">
+        <div class="rubric-header">
+          <span class="rubric-name">4. References</span>
+          <span class="rubric-max">15 pts</span>
+        </div>
+        <div class="rubric-question">Did the student cite credible cosmology/astronomy sources?</div>
+        <div class="tier-list">
+          <div class="tier"><span class="tier-score">15</span><div class="tier-bar"></div><span class="tier-desc">3+ credible references, properly cited</span></div>
+          <div class="tier"><span class="tier-score">12</span><div class="tier-bar"></div><span class="tier-desc">2 credible references with proper citations</span></div>
+          <div class="tier"><span class="tier-score">9</span><div class="tier-bar"></div><span class="tier-desc">1 credible reference with proper citation</span></div>
+          <div class="tier"><span class="tier-score">6</span><div class="tier-bar"></div><span class="tier-desc">References listed but none are credible or relevant</span></div>
+          <div class="tier"><span class="tier-score">3</span><div class="tier-bar"></div><span class="tier-desc">Only non-credible references (anime wikis, blogs, AI summaries)</span></div>
+          <div class="tier"><span class="tier-score">0</span><div class="tier-bar"></div><span class="tier-desc">No references</span></div>
+        </div>
+      </div>
+
+      <!-- 5. Writing Quality -->
+      <div class="rubric-card cat-writing">
+        <div class="rubric-header">
+          <span class="rubric-name">5. Writing Quality</span>
+          <span class="rubric-max">15 pts</span>
+        </div>
+        <div class="rubric-question">Is the report well-structured, clear, and readable?</div>
+        <div class="tier-list">
+          <div class="tier"><span class="tier-score">15</span><div class="tier-bar"></div><span class="tier-desc">Clear structure (intro, body, conclusion), logical flow, minimal errors</span></div>
+          <div class="tier"><span class="tier-score">12</span><div class="tier-bar"></div><span class="tier-desc">Mostly clear with minor structural issues or a few grammar errors</span></div>
+          <div class="tier"><span class="tier-score">9</span><div class="tier-bar"></div><span class="tier-desc">Readable but disorganized or frequent grammar issues</span></div>
+          <div class="tier"><span class="tier-score">6</span><div class="tier-bar"></div><span class="tier-desc">Poorly organized and difficult to follow</span></div>
+          <div class="tier"><span class="tier-score">3</span><div class="tier-bar"></div><span class="tier-desc">Mostly incoherent but some content is discernible</span></div>
+          <div class="tier"><span class="tier-score">0</span><div class="tier-bar"></div><span class="tier-desc">Incoherent or unreadable</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Credible references -->
+  <section>
+    <h2>What Counts as a Credible Reference?</h2>
+    <p class="section-desc">Course lecture slides count as one reference regardless of how many slide decks are cited.</p>
+    <div class="ref-grid">
+      <div class="ref-box ref-yes">
+        <h4>Credible</h4>
+        Peer-reviewed journal articles<br>
+        Textbooks (incl. Serjeant's <em>Observational Cosmology</em>)<br>
+        NASA / ESA / JAXA official pages<br>
+        ArXiv preprints<br>
+        Course lecture notes/slides<br>
+        PBS Space Time videos
+      </div>
+      <div class="ref-box ref-no">
+        <h4>Not Credible (on their own)</h4>
+        Wikipedia (OK only as supplementary)<br>
+        Anime wiki pages<br>
+        Personal blogs<br>
+        AI-generated summaries
+      </div>
+    </div>
+  </section>
+
+  <!-- Overall scale -->
+  <section>
+    <h2>Overall Grade Scale</h2>
+    <p class="section-desc">After summing the 5 category scores.</p>
+    <div class="scale-row">
+      <div class="scale-item" style="background:#d1fae5;border:1px solid #a7f3d0;">
+        <div class="range" style="color:#065f46;">85 - 100</div>
+        <div class="grade-label" style="color:#047857;">Excellent</div>
+      </div>
+      <div class="scale-item" style="background:#dbeafe;border:1px solid #bfdbfe;">
+        <div class="range" style="color:#1e40af;">70 - 84</div>
+        <div class="grade-label" style="color:#2563eb;">Good</div>
+      </div>
+      <div class="scale-item" style="background:#fef3c7;border:1px solid #fde68a;">
+        <div class="range" style="color:#92400e;">55 - 69</div>
+        <div class="grade-label" style="color:#d97706;">Adequate</div>
+      </div>
+      <div class="scale-item" style="background:#fed7aa;border:1px solid #fdba74;">
+        <div class="range" style="color:#9a3412;">40 - 54</div>
+        <div class="grade-label" style="color:#ea580c;">Below expectations</div>
+      </div>
+      <div class="scale-item" style="background:#fee2e2;border:1px solid #fecaca;">
+        <div class="range" style="color:#991b1b;">0 - 39</div>
+        <div class="grade-label" style="color:#dc2626;">Insufficient</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Key rules -->
+  <section>
+    <h2>Grading Rules</h2>
+    <div>
+      <ul class="rules-list">
+        <li><strong>Fixed tiers only</strong> — Scores must be one of the listed tier values. No in-between scores (e.g., no "22" for a 30-point category).</li>
+        <li><strong>When in doubt, round down</strong> — If a submission falls between two tiers, always assign the lower tier's score.</li>
+        <li><strong>Score categories independently</strong> — Don't let a weak intro drag down the concepts score, or vice versa.</li>
+        <li><strong>AI suggests, TA decides</strong> — The AI pre-fills scores and feedback. The TA can accept, edit, or completely override before saving.</li>
+        <li><strong>Return option</strong> — If a submission needs revision, the TA can return it to the student instead of grading. The student gets notified and can re-upload.</li>
+        <li><strong>Sig figs matter</strong> — If a student reports a value like H<sub>0</sub> = 67.74823 km/s/Mpc from a rough estimate, note the inappropriate precision.</li>
+      </ul>
+    </div>
+  </section>
+
+</body>
+</html>
