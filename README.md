@@ -1,6 +1,6 @@
 # Cosmo
 
-A teaching assistant platform for an Observational Cosmology course at NTHU. Students write reports connecting anime/science fiction to real cosmology, and TAs grade them with AI assistance.
+A teaching assistant platform for a graduate-level Observational Cosmology course at NTHU. Graduate students write reports connecting anime/science fiction to real cosmology, and TAs grade them with AI assistance.
 
 ## Tech Stack
 
@@ -50,11 +50,11 @@ Reports are graded by GPT-5.2 with a structured rubric tailored to anime-cosmolo
 |----------|--------|-------|
 | Anime Introduction | 10 | Plot summary, themes, genuine familiarity |
 | Cosmology-Anime Connection | 30 | Specific cosmological concepts tied to scenes |
-| Cosmological Concepts | 30 | Real science explained accurately, beyond anime |
-| References | 15 | Credible sources, proper citations |
-| Writing Quality | 15 | Structure, flow, grammar |
+| Cosmological Concepts | 30 | Graduate-level depth, quantitative reasoning, primary literature |
+| References | 15 | Credible sources incl. journal articles/ArXiv |
+| Writing Quality | 15 | Structure, flow, precise scientific language |
 
-The AI grader uses an MIT professor persona — knowledgeable, direct, constructive. It also checks for proper use of significant figures in any numerical values. TAs review all AI suggestions before finalizing grades.
+The AI grader holds graduate students to a higher standard — expecting deeper physical reasoning, quantitative analysis, and engagement with primary literature. It checks for proper use of significant figures. TAs review all AI suggestions before finalizing grades.
 
 The rubric and grading standards are defined in `src/lib/grading-rubric.ts` and can be customized per assignment.
 
