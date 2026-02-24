@@ -15,10 +15,12 @@ import {
   LogOut,
   Menu,
   X,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { EffectiveRoleProvider } from "@/components/providers/EffectiveRoleContext";
 
 interface MainLayoutClientProps {
   children: React.ReactNode;
@@ -26,6 +28,8 @@ interface MainLayoutClientProps {
   userEmail: string;
   userImage?: string;
   userRole: string;
+  isImpersonating?: boolean;
+  realUserName?: string;
 }
 
 const NAV_ITEMS = [
@@ -34,6 +38,7 @@ const NAV_ITEMS = [
   { href: "/simulations", label: "Simulations", icon: FlaskConical, roles: null },
   { href: "/grading", label: "Grading", icon: ClipboardCheck, roles: ["TA", "PROFESSOR", "ADMIN"] },
   { href: "/grades", label: "My Grades", icon: GraduationCap, roles: ["STUDENT"] },
+  { href: "/admin/users", label: "Users", icon: Users, roles: ["ADMIN"] },
   { href: "/settings", label: "Settings", icon: Settings, roles: null },
 ];
 
@@ -43,9 +48,18 @@ export default function MainLayoutClient({
   userEmail,
   userImage,
   userRole,
+  isImpersonating,
+  realUserName,
 }: MainLayoutClientProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [stoppingImpersonation, setStoppingImpersonation] = useState(false);
+
+  async function stopImpersonating() {
+    setStoppingImpersonation(true);
+    await fetch("/api/impersonate", { method: "DELETE" });
+    window.location.href = "/admin/users";
+  }
 
   const visibleItems = NAV_ITEMS.filter(
     (item) => !item.roles || item.roles.includes(userRole)
@@ -145,8 +159,25 @@ export default function MainLayoutClient({
           </div>
         </header>
 
+        {isImpersonating && (
+          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-amber-100 dark:bg-amber-900/40 border-b border-amber-200 dark:border-amber-800 text-sm">
+            <span className="text-amber-900 dark:text-amber-200">
+              Viewing as <strong>{userName}</strong> &mdash; Logged in as {realUserName}
+            </span>
+            <button
+              onClick={stopImpersonating}
+              disabled={stoppingImpersonation}
+              className="shrink-0 px-3 py-1 rounded-md text-xs font-medium bg-amber-200 dark:bg-amber-800 text-amber-900 dark:text-amber-100 hover:bg-amber-300 dark:hover:bg-amber-700 transition-colors disabled:opacity-50"
+            >
+              {stoppingImpersonation ? "Stopping..." : "Stop Impersonating"}
+            </button>
+          </div>
+        )}
+
         <main className="flex-1 overflow-y-auto">
-          {children}
+          <EffectiveRoleProvider userRole={userRole}>
+            {children}
+          </EffectiveRoleProvider>
         </main>
       </div>
     </div>

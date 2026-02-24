@@ -32,6 +32,9 @@ export async function GET(
         userId: auth.user.id,
       },
     },
+    include: {
+      gradedBy: { select: { name: true } },
+    },
   });
 
   return NextResponse.json({ data: { assignment, submission } });
@@ -59,4 +62,25 @@ export async function PATCH(
   });
 
   return NextResponse.json({ data: assignment });
+}
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
+  const auth = await requireApiRole(["TA", "PROFESSOR", "ADMIN"]);
+  if (isErrorResponse(auth)) return auth;
+
+  const assignment = await prisma.assignment.findUnique({
+    where: { id: params.id },
+    include: { _count: { select: { submissions: true } } },
+  });
+
+  if (!assignment) {
+    return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
+  }
+
+  await prisma.assignment.delete({ where: { id: params.id } });
+
+  return NextResponse.json({ data: { deleted: true } });
 }

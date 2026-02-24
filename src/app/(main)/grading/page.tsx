@@ -2,20 +2,44 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Sparkles, FileText, CheckCircle2, ExternalLink } from "lucide-react";
+import {
+  Sparkles,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
+  RotateCcw,
+  Search,
+  ChevronDown,
+  Filter,
+  ClipboardList,
+  User,
+  FileText,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Assignment {
   id: string;
   title: string;
   reportNumber: number;
   totalPoints: number;
+  _count: { submissions: number };
+  ungradedCount: number;
 }
 
 interface Submission {
@@ -32,39 +56,68 @@ interface Submission {
   gradedBy: { name: string | null } | null;
 }
 
+type FilterMode = "all" | "ungraded" | "graded";
+type PickerFilter = "all" | "ungraded";
+
 export default function GradingPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [selectedAssignment, setSelectedAssignment] = useState<string>("");
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState("");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [score, setScore] = useState("");
   const [feedback, setFeedback] = useState("");
   const [saving, setSaving] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [returning, setReturning] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [filterMode, setFilterMode] = useState<FilterMode>("all");
+
+  // Assignment picker state
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerSearch, setPickerSearch] = useState("");
+  const [pickerFilter, setPickerFilter] = useState<PickerFilter>("all");
 
   useEffect(() => {
     fetch("/api/assignments")
       .then((r) => r.json())
-      .then((d) => {
-        const list = (d.data || []).filter((a: Assignment) => true);
-        setAssignments(list);
-        if (list.length > 0) setSelectedAssignment(list[0].id);
-      })
+      .then((d) => setAssignments(d.data || []))
       .catch((err) => console.error("[grading:fetch-assignments]", { error: err.message }))
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
-    if (!selectedAssignment) return;
-    fetch(`/api/assignments/${selectedAssignment}/submissions`)
+    if (!selectedAssignmentId) return;
+    setLoadingSubmissions(true);
+    fetch(`/api/assignments/${selectedAssignmentId}/submissions`)
       .then((r) => r.json())
       .then((d) => {
         setSubmissions(d.data || []);
         setSelectedSubmission(null);
+        setFilterMode("all");
       })
-      .catch((err) => console.error("[grading:fetch-submissions]", { error: err.message }));
-  }, [selectedAssignment]);
+      .catch((err) => console.error("[grading:fetch-submissions]", { error: err.message }))
+      .finally(() => setLoadingSubmissions(false));
+  }, [selectedAssignmentId]);
+
+  const selectedAssignment = assignments.find((a) => a.id === selectedAssignmentId);
+  const maxPoints = Number(selectedAssignment?.totalPoints || 100);
+
+  const gradedCount = submissions.filter((s) => s.gradedAt).length;
+  const ungradedCount = submissions.filter((s) => !s.gradedAt).length;
+
+  const filteredSubmissions = submissions.filter((s) => {
+    if (filterMode === "ungraded") return !s.gradedAt;
+    if (filterMode === "graded") return !!s.gradedAt;
+    return true;
+  });
+
+  // Assignment picker filtering
+  const filteredAssignments = assignments.filter((a) => {
+    if (pickerSearch && !a.title.toLowerCase().includes(pickerSearch.toLowerCase())) return false;
+    if (pickerFilter === "ungraded" && a.ungradedCount <= 0) return false;
+    return true;
+  });
 
   function selectSubmission(sub: Submission) {
     setSelectedSubmission(sub);
@@ -100,11 +153,9 @@ export default function GradingPage() {
   async function handleSaveGrade() {
     if (!selectedSubmission) return;
     const numScore = Number(score);
-    const assignment = assignments.find((a) => a.id === selectedAssignment);
-    if (!assignment) return;
 
-    if (!Number.isFinite(numScore) || numScore < 0 || numScore > Number(assignment.totalPoints)) {
-      toast.error(`Score must be between 0 and ${Number(assignment.totalPoints)}`);
+    if (!Number.isFinite(numScore) || numScore < 0 || numScore > maxPoints) {
+      toast.error(`Score must be between 0 and ${maxPoints}`);
       return;
     }
 
@@ -125,24 +176,66 @@ export default function GradingPage() {
         return;
       }
       toast.success("Grade saved");
-      setSubmissions((prev) =>
-        prev.map((s) =>
-          s.id === selectedSubmission.id
-            ? { ...s, totalScore: numScore, feedback, gradedAt: new Date().toISOString() }
-            : s
-        )
-      );
-      setSelectedSubmission({
+      const updated = {
         ...selectedSubmission,
         totalScore: numScore,
         feedback,
-        gradedAt: new Date().toISOString(),
-      });
+        gradedAt: data.data.gradedAt || new Date().toISOString(),
+        gradedBy: data.data.gradedBy || selectedSubmission.gradedBy,
+      };
+      setSubmissions((prev) =>
+        prev.map((s) => (s.id === selectedSubmission.id ? updated : s))
+      );
+      setSelectedSubmission(updated);
     } catch (err) {
       console.error("[grading:save]", { error: err instanceof Error ? err.message : String(err) });
       toast.error("Failed to save grade");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleReturnAssignment() {
+    if (!selectedSubmission) return;
+    const confirmed = window.confirm(
+      "Return this assignment to the student?\n\n" +
+      "This will clear the grade and feedback, allowing the student to upload a new submission. " +
+      "This action cannot be undone."
+    );
+    if (!confirmed) return;
+    setReturning(true);
+    try {
+      const res = await fetch("/api/grading", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ submissionId: selectedSubmission.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to return assignment");
+        return;
+      }
+      toast.success("Assignment returned — student can now resubmit");
+      const cleared = {
+        ...selectedSubmission,
+        totalScore: null,
+        feedback: null,
+        gradedAt: null,
+        gradedBy: null,
+        aiScore: null,
+        aiFeedback: null,
+      };
+      setSubmissions((prev) =>
+        prev.map((s) => (s.id === selectedSubmission.id ? cleared : s))
+      );
+      setSelectedSubmission(cleared);
+      setScore("");
+      setFeedback("");
+    } catch (err) {
+      console.error("[grading:return]", { error: err instanceof Error ? err.message : String(err) });
+      toast.error("Failed to return assignment");
+    } finally {
+      setReturning(false);
     }
   }
 
@@ -155,143 +248,423 @@ export default function GradingPage() {
   }
 
   return (
-    <div className="flex h-full">
-      <div className="w-80 border-r dark:border-gray-800 flex flex-col bg-white dark:bg-gray-900 shrink-0">
-        <div className="p-4 border-b dark:border-gray-800">
-          <h2 className="font-semibold text-gray-900 dark:text-white mb-3">Grading</h2>
-          <select
-            className="w-full rounded-lg border dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-            value={selectedAssignment}
-            onChange={(e) => setSelectedAssignment(e.target.value)}
-          >
-            {assignments.map((a) => (
-              <option key={a.id} value={a.id}>
-                Report {a.reportNumber}: {a.title}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {submissions.length === 0 ? (
-            <p className="p-4 text-sm text-gray-500">No submissions yet.</p>
-          ) : (
-            submissions.map((sub) => (
-              <button
-                key={sub.id}
-                onClick={() => selectSubmission(sub)}
-                className={cn(
-                  "w-full text-left px-4 py-3 border-b dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors",
-                  selectedSubmission?.id === sub.id && "bg-indigo-50 dark:bg-indigo-500/10"
-                )}
-              >
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {sub.user.name || sub.user.email}
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  {sub.gradedAt ? (
-                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-xs">
-                      Graded: {Number(sub.totalScore)}
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="text-xs">Ungraded</Badge>
-                  )}
-                </div>
-              </button>
-            ))
-          )}
-        </div>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+          Grading
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          Review and grade student submissions
+        </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
-        {!selectedSubmission ? (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            Select a submission to grade
-          </div>
-        ) : (
-          <div className="max-w-2xl mx-auto space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {selectedSubmission.user.name || selectedSubmission.user.email}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Submitted {new Date(selectedSubmission.submittedAt).toLocaleString()}
-                </p>
+      {/* Assignment Picker & Controls */}
+      <div className="space-y-3">
+        {/* Assignment Picker Popover */}
+        <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+          <PopoverTrigger asChild>
+            <button className="flex h-10 w-full sm:w-96 items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 px-3 py-2 text-sm shadow-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+              <span className={selectedAssignmentId ? "text-gray-900 dark:text-gray-100 font-medium truncate" : "text-gray-400 dark:text-gray-500"}>
+                {selectedAssignment?.title || "Select an assignment to grade"}
+              </span>
+              <ChevronDown className="h-4 w-4 opacity-50 shrink-0 ml-2" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="sm:w-96 p-0" align="start">
+            {/* Search */}
+            <div className="p-2 border-b border-gray-100 dark:border-gray-800">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                <Input
+                  placeholder="Search assignments..."
+                  value={pickerSearch}
+                  onChange={(e) => setPickerSearch(e.target.value)}
+                  className="pl-8 h-8 text-sm"
+                />
               </div>
-              {selectedSubmission.fileUrl && (
-                <a href={selectedSubmission.fileUrl} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <ExternalLink className="w-4 h-4" />
-                    View PDF
-                  </Button>
-                </a>
+            </div>
+            {/* Filter tabs */}
+            <div className="flex items-center gap-1 p-2 border-b border-gray-100 dark:border-gray-800">
+              {([
+                { key: "all" as const, label: "All" },
+                { key: "ungraded" as const, label: "Ungraded" },
+              ]).map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setPickerFilter(f.key)}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                    pickerFilter === f.key
+                      ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900"
+                      : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            {/* Assignment list */}
+            <div className="max-h-64 overflow-y-auto p-1">
+              {filteredAssignments.length === 0 ? (
+                <div className="px-3 py-6 text-sm text-gray-400 text-center">
+                  No matching assignments
+                </div>
+              ) : (
+                filteredAssignments.map((a) => (
+                  <button
+                    key={a.id}
+                    onClick={() => {
+                      setSelectedAssignmentId(a.id);
+                      setPickerOpen(false);
+                      setPickerSearch("");
+                    }}
+                    className={`w-full text-left rounded-md px-3 py-2.5 transition-colors ${
+                      a.id === selectedAssignmentId
+                        ? "bg-gray-100 dark:bg-gray-800"
+                        : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    }`}
+                  >
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      {a.title}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                      <span>{a._count.submissions} submissions</span>
+                      {a.ungradedCount > 0 && (
+                        <span className="px-1.5 py-0.5 rounded font-semibold text-[10px] bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400">
+                          {a.ungradedCount} ungraded
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))
               )}
             </div>
+          </PopoverContent>
+        </Popover>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">Grade</CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAiAssist}
-                  disabled={aiLoading || !selectedSubmission.fileUrl}
-                  className="gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  {aiLoading ? "Analyzing..." : "AI Assist"}
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="score">
-                    Score (out of{" "}
-                    {Number(assignments.find((a) => a.id === selectedAssignment)?.totalPoints || 100)})
-                  </Label>
-                  <Input
-                    id="score"
-                    type="number"
-                    min={0}
-                    max={Number(assignments.find((a) => a.id === selectedAssignment)?.totalPoints || 100)}
-                    value={score}
-                    onChange={(e) => setScore(e.target.value)}
-                    placeholder="0"
-                  />
-                </div>
+        {/* Submission controls — only visible after selecting an assignment */}
+        {selectedAssignmentId && submissions.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={filterMode} onValueChange={(v) => setFilterMode(v as FilterMode)}>
+              <SelectTrigger className="w-36 sm:w-44">
+                <Filter className="h-3.5 w-3.5 mr-1.5" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All ({submissions.length})</SelectItem>
+                <SelectItem value="ungraded">Ungraded ({ungradedCount})</SelectItem>
+                <SelectItem value="graded">Graded ({gradedCount})</SelectItem>
+              </SelectContent>
+            </Select>
 
-                <div>
-                  <Label htmlFor="feedback">Feedback</Label>
-                  <Textarea
-                    id="feedback"
-                    value={feedback}
-                    onChange={(e) => setFeedback(e.target.value)}
-                    placeholder="Provide feedback on the student's report..."
-                    rows={8}
-                  />
-                </div>
-
-                {selectedSubmission.aiFeedback && (
-                  <div className="p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800">
-                    <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mb-1">
-                      AI Suggestion: {Number(selectedSubmission.aiScore)} pts
-                    </p>
-                    <p className="text-sm text-indigo-800 dark:text-indigo-300 whitespace-pre-wrap">
-                      {selectedSubmission.aiFeedback}
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex justify-end">
-                  <Button onClick={handleSaveGrade} disabled={saving || !score}>
-                    {saving ? "Saving..." : selectedSubmission.gradedAt ? "Update Grade" : "Submit Grade"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+                <CheckCircle2 className="h-3 w-3" />
+                {gradedCount} Graded
+              </span>
+              <span className="flex items-center gap-1.5 text-xs font-medium text-amber-600 bg-amber-50 dark:bg-amber-950 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800">
+                <Clock className="h-3 w-3" />
+                {ungradedCount} Ungraded
+              </span>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Main content */}
+      {!selectedAssignmentId ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <ClipboardList className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Select an assignment to grade
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Choose an assignment from the dropdown above.
+          </p>
+        </div>
+      ) : loadingSubmissions ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+        </div>
+      ) : (
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:h-[calc(100vh-16rem)]">
+          {/* Submission List */}
+          <div className="w-full md:w-80 shrink-0 flex flex-col bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm max-h-[40vh] md:max-h-none">
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                Submissions ({filteredSubmissions.length})
+              </h2>
+              {selectedAssignment && (
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
+                  {selectedAssignment.title} &middot; {maxPoints} pts
+                </p>
+              )}
+            </div>
+            <div className="flex-1 overflow-auto p-2 space-y-1.5">
+              {filteredSubmissions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <ClipboardList className="h-6 w-6 text-gray-300 dark:text-gray-600 mb-2" />
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    {filterMode === "ungraded"
+                      ? "All submissions graded!"
+                      : filterMode === "graded"
+                        ? "No graded submissions yet."
+                        : "No submissions yet."}
+                  </p>
+                </div>
+              ) : (
+                filteredSubmissions.map((sub) => {
+                  const isSelected = selectedSubmission?.id === sub.id;
+                  const isGraded = !!sub.gradedAt;
+
+                  return (
+                    <button
+                      key={sub.id}
+                      onClick={() => selectSubmission(sub)}
+                      className={`w-full text-left rounded-lg p-3 transition-colors border ${
+                        isSelected
+                          ? "bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 shadow-sm"
+                          : "border-transparent hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                            isSelected
+                              ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900"
+                              : isGraded
+                                ? "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-400"
+                                : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                          }`}
+                        >
+                          {(sub.user.name || sub.user.email).charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                            {sub.user.name || sub.user.email}
+                          </p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
+                            {sub.user.email}
+                          </p>
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                            Submitted{" "}
+                            {new Intl.DateTimeFormat("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                            }).format(new Date(sub.submittedAt))}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-2 ml-10 space-y-1">
+                        <span
+                          className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${
+                            isGraded
+                              ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800"
+                              : "text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                          }`}
+                        >
+                          {isGraded ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <Clock className="h-3 w-3" />
+                          )}
+                          {sub.totalScore != null ? Number(sub.totalScore) : "—"}/{maxPoints}
+                        </span>
+                        {!isGraded && (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+                            <Clock className="h-3 w-3" />
+                            Ungraded
+                          </span>
+                        )}
+                        {sub.gradedBy?.name && (
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                            Graded by {sub.gradedBy.name}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Grading Panel */}
+          <div className="flex-1 flex flex-col bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
+            {selectedSubmission ? (
+              <>
+                {/* Panel Header */}
+                <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0">
+                      <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                        {selectedSubmission.user.name || selectedSubmission.user.email}
+                      </h3>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        Submitted{" "}
+                        {new Intl.DateTimeFormat("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        }).format(new Date(selectedSubmission.submittedAt))}
+                      </p>
+                      {selectedSubmission.gradedBy?.name && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
+                          Graded by {selectedSubmission.gradedBy.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-auto">
+                    {selectedSubmission.gradedAt ? (
+                      <Badge className="bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 text-xs">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Graded
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 text-xs">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Ungraded
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Panel Body */}
+                <div className="flex-1 overflow-auto p-4 sm:p-6">
+                  <div className="max-w-2xl mx-auto space-y-4">
+                    {/* Student Report File */}
+                    {selectedSubmission.fileUrl && (
+                      <a
+                        href={selectedSubmission.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-4 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 transition-colors group"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center shrink-0">
+                          <FileText className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-indigo-900 dark:text-indigo-200 truncate">
+                            {selectedSubmission.fileName || "Student Report"}
+                          </p>
+                          <p className="text-xs text-indigo-600 dark:text-indigo-400">
+                            Click to open PDF in new tab
+                          </p>
+                        </div>
+                        <ExternalLink className="h-4 w-4 text-indigo-400 dark:text-indigo-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 shrink-0" />
+                      </a>
+                    )}
+
+                    {/* Grade Card */}
+                    <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          Grade
+                        </h4>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleAiAssist}
+                          disabled={aiLoading || !selectedSubmission.fileUrl}
+                          className="gap-1.5"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          {aiLoading ? "Analyzing..." : "AI Assist"}
+                        </Button>
+                      </div>
+                      <div className="p-4 space-y-4">
+                        <div>
+                          <Label htmlFor="score">
+                            Score (out of {maxPoints})
+                          </Label>
+                          <Input
+                            id="score"
+                            type="number"
+                            min={0}
+                            max={maxPoints}
+                            value={score}
+                            onChange={(e) => setScore(e.target.value)}
+                            placeholder="0"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="feedback">Feedback</Label>
+                          <Textarea
+                            id="feedback"
+                            value={feedback}
+                            onChange={(e) => setFeedback(e.target.value)}
+                            placeholder="Provide feedback on the student's report..."
+                            rows={8}
+                          />
+                        </div>
+
+                        {selectedSubmission.aiFeedback && (
+                          <div className="p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800">
+                            <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mb-1">
+                              AI Suggestion: {Number(selectedSubmission.aiScore)} pts
+                            </p>
+                            <p className="text-sm text-indigo-800 dark:text-indigo-300 whitespace-pre-wrap">
+                              {selectedSubmission.aiFeedback}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          <div className="flex justify-end gap-2">
+                            {selectedSubmission.gradedAt && (
+                              <Button
+                                variant="outline"
+                                onClick={handleReturnAssignment}
+                                disabled={returning}
+                                className="gap-2"
+                                title="Clear the grade and allow the student to resubmit"
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                                {returning ? "Returning..." : "Return to Student"}
+                              </Button>
+                            )}
+                            <Button onClick={handleSaveGrade} disabled={saving || !score}>
+                              {saving
+                                ? "Saving..."
+                                : selectedSubmission.gradedAt
+                                  ? "Update Grade"
+                                  : "Submit Grade"}
+                            </Button>
+                          </div>
+                          {selectedSubmission.gradedAt && (
+                            <p className="text-xs text-gray-400 dark:text-gray-500 text-right">
+                              &ldquo;Return to Student&rdquo; clears the grade and lets the student upload a new submission.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
+                <ClipboardList className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Select a submission to grade
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Choose a student from the list on the left.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

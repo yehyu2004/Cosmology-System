@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { Plus, FileText, Calendar, Users } from "lucide-react";
+import { useEffectiveRole } from "@/components/providers/EffectiveRoleContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,13 +22,11 @@ interface Assignment {
 }
 
 export default function AssignmentsPage() {
-  const { data: session } = useSession();
+  const userRole = useEffectiveRole();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const userRole = (session?.user as any)?.role as string | undefined;
-  const isStaff = userRole && ["TA", "PROFESSOR", "ADMIN"].includes(userRole);
+  const isStaff = ["TA", "PROFESSOR", "ADMIN"].includes(userRole);
 
   useEffect(() => {
     fetch("/api/assignments")

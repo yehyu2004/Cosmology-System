@@ -21,6 +21,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
   }
 
+  // Check if an existing submission has been graded
+  const existing = await prisma.submission.findUnique({
+    where: {
+      assignmentId_userId: {
+        assignmentId,
+        userId: auth.user.id,
+      },
+    },
+    select: { gradedAt: true },
+  });
+
+  if (existing?.gradedAt) {
+    return NextResponse.json(
+      { error: "Cannot resubmit — assignment has been graded. Ask your TA to return it." },
+      { status: 403 }
+    );
+  }
+
   const submission = await prisma.submission.upsert({
     where: {
       assignmentId_userId: {
@@ -32,6 +50,8 @@ export async function POST(req: Request) {
       fileUrl,
       fileName,
       submittedAt: new Date(),
+      aiScore: null,
+      aiFeedback: null,
     },
     create: {
       assignmentId,

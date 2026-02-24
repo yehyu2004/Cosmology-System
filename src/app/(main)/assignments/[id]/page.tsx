@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Upload, FileText, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Upload, FileText, CheckCircle2, ArrowLeft, Trash2 } from "lucide-react";
+import { useEffectiveRole } from "@/components/providers/EffectiveRoleContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,20 +29,29 @@ interface Submission {
   totalScore: number | null;
   gradedAt: string | null;
   feedback: string | null;
+  gradedBy: { name: string | null } | null;
+}
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export default function AssignmentDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { data: session } = useSession();
+  const userRole = useEffectiveRole();
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedFile, setSelectedFile] = useState<{ name: string; size: number } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const userRole = (session?.user as any)?.role as string | undefined;
-  const isStaff = userRole && ["TA", "PROFESSOR", "ADMIN"].includes(userRole);
+  const isStaff = ["TA", "PROFESSOR", "ADMIN"].includes(userRole);
 
   useEffect(() => {
     fetch(`/api/assignments/${params.id}`)
@@ -59,6 +68,13 @@ export default function AssignmentDetailPage() {
     const file = e.target.files?.[0];
     if (!file || !assignment) return;
 
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(`File is too large (${formatFileSize(file.size)}). Maximum size is 20 MB.`);
+      e.target.value = "";
+      return;
+    }
+
+    setSelectedFile({ name: file.name, size: file.size });
     setUploading(true);
     try {
       const formData = new FormData();
@@ -93,6 +109,32 @@ export default function AssignmentDetailPage() {
       toast.error("Upload failed");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!assignment) return;
+    const confirmed = window.confirm(
+      `Delete "${assignment.title}"?\n\n` +
+      "This will permanently delete the assignment and all student submissions. " +
+      "This action cannot be undone."
+    );
+    if (!confirmed) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/assignments/${assignment.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to delete assignment");
+        return;
+      }
+      toast.success("Assignment deleted");
+      router.push("/assignments");
+    } catch (err) {
+      console.error("[assignment:delete]", { error: err instanceof Error ? err.message : String(err) });
+      toast.error("Failed to delete assignment");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -169,7 +211,14 @@ export default function AssignmentDetailPage() {
                 {submission.gradedAt && (
                   <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border dark:border-gray-700">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-500">Grade</span>
+                      <div>
+                        <span className="text-sm font-medium text-gray-500">Grade</span>
+                        {submission.gradedBy?.name && (
+                          <p className="text-xs text-gray-400 dark:text-gray-500">
+                            Graded by {submission.gradedBy.name}
+                          </p>
+                        )}
+                      </div>
                       <Badge className="text-base">
                         {Number(submission.totalScore)} / {Number(assignment.totalPoints)}
                       </Badge>
@@ -185,23 +234,35 @@ export default function AssignmentDetailPage() {
                   </div>
                 )}
 
-                <div>
-                  <label className="cursor-pointer">
-                    <Button variant="outline" size="sm" disabled={uploading} asChild>
-                      <span>
-                        <Upload className="w-4 h-4 mr-2" />
-                        {uploading ? "Uploading..." : "Re-upload"}
-                      </span>
-                    </Button>
-                    <input
-                      type="file"
-                      accept=".pdf"
-                      className="hidden"
-                      onChange={handleUpload}
-                      disabled={uploading}
-                    />
-                  </label>
-                </div>
+                {submission.gradedAt ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    Assignment graded. Contact your TA to request resubmission.
+                  </p>
+                ) : (
+                  <div>
+                    <label className="cursor-pointer">
+                      <Button variant="outline" size="sm" disabled={uploading} asChild>
+                        <span>
+                          <Upload className="w-4 h-4 mr-2" />
+                          {uploading ? "Uploading..." : "Re-upload"}
+                        </span>
+                      </Button>
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        className="hidden"
+                        onChange={handleUpload}
+                        disabled={uploading}
+                      />
+                    </label>
+                    {selectedFile && uploading && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {selectedFile.name} ({formatFileSize(selectedFile.size)})
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-1">PDF only &middot; Max 20 MB</p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-8">
@@ -222,6 +283,12 @@ export default function AssignmentDetailPage() {
                     disabled={uploading}
                   />
                 </label>
+                {selectedFile && uploading && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    {selectedFile.name} ({formatFileSize(selectedFile.size)})
+                  </p>
+                )}
+                <p className="text-xs text-gray-400 mt-2">PDF only &middot; Max 20 MB</p>
               </div>
             )}
           </CardContent>
@@ -230,10 +297,19 @@ export default function AssignmentDetailPage() {
 
       {isStaff && (
         <Card>
-          <CardContent className="py-6 text-center">
+          <CardContent className="py-6 flex items-center justify-center gap-3">
             <Link href="/grading">
               <Button>Go to Grading</Button>
             </Link>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              {deleting ? "Deleting..." : "Delete Assignment"}
+            </Button>
           </CardContent>
         </Card>
       )}

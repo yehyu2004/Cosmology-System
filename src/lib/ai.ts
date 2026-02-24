@@ -1,4 +1,10 @@
 import OpenAI from "openai";
+import {
+  GRADING_SYSTEM_PROMPT,
+  DEFAULT_RUBRIC,
+  SCORING_GUIDELINES,
+  FEEDBACK_FORMAT,
+} from "@/lib/grading-rubric";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -15,11 +21,16 @@ export async function aiGradeReport({
   maxPoints: number;
   reportText: string;
 }): Promise<{ score: number; feedback: string } | null> {
-  const prompt = `You are a teaching assistant grading a student report for an Observational Cosmology course (textbook: "Observational Cosmology" by Stephen Serjeant, Cambridge University Press).
+  const effectiveRubric = rubric?.trim() || DEFAULT_RUBRIC;
 
-Assignment: ${assignmentTitle}
+  const userPrompt = `Assignment: ${assignmentTitle}
 ${assignmentDescription ? `Description: ${assignmentDescription}` : ""}
-${rubric ? `Grading Rubric:\n${rubric}` : ""}
+
+Grading Rubric:
+${effectiveRubric}
+
+${SCORING_GUIDELINES}
+
 Max Points: ${maxPoints}
 
 Student Report Content:
@@ -27,19 +38,20 @@ ${reportText.slice(0, 15000)}
 
 Grade this report and provide:
 1. A numeric score (0 to ${maxPoints})
-2. Constructive feedback covering:
-   - Scientific accuracy and understanding of cosmological concepts
-   - Quality of analysis and data interpretation
-   - Clarity of presentation and writing
-   - Suggestions for improvement
+2. Constructive feedback following this format:
+
+${FEEDBACK_FORMAT}
 
 Respond in JSON format: {"score": <number>, "feedback": "<string>"}`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [{ role: "user", content: prompt }],
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: GRADING_SYSTEM_PROMPT },
+      { role: "user", content: userPrompt },
+    ],
     response_format: { type: "json_object" },
-    max_tokens: 2000,
+    max_tokens: 3000,
   });
 
   const content = response.choices[0]?.message?.content;

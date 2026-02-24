@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DEFAULT_RUBRIC } from "@/lib/grading-rubric";
 
 export default function CreateAssignmentPage() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function CreateAssignmentPage() {
     reportNumber: 1,
     totalPoints: 100,
     dueDate: "",
-    rubric: "",
+    rubric: DEFAULT_RUBRIC,
     published: false,
   });
 
@@ -121,7 +122,7 @@ export default function CreateAssignmentPage() {
               value={form.rubric}
               onChange={(e) => setForm({ ...form, rubric: e.target.value })}
               placeholder="Describe the grading criteria for this report..."
-              rows={6}
+              rows={12}
             />
           </div>
         </CardContent>

@@ -26,10 +26,18 @@ export async function GET() {
     include: {
       createdBy: { select: { name: true } },
       _count: { select: { submissions: true } },
+      submissions: isStaff
+        ? { where: { gradedAt: null }, select: { id: true } }
+        : false,
     },
   });
 
-  return NextResponse.json({ data: assignments });
+  const data = assignments.map(({ submissions: ungradedSubs, ...rest }) => ({
+    ...rest,
+    ungradedCount: Array.isArray(ungradedSubs) ? ungradedSubs.length : 0,
+  }));
+
+  return NextResponse.json({ data });
 }
 
 export async function POST(req: Request) {

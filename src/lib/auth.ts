@@ -35,6 +35,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (dbUser) {
           token.id = dbUser.id;
           token.role = dbUser.role;
+          token.studentId = dbUser.studentId;
         }
       }
       return token;
@@ -44,6 +45,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (session.user as any).role = token.role;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (session.user as any).studentId = token.studentId;
       }
       return session;
     },

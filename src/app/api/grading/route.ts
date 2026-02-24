@@ -6,6 +6,40 @@ import { z } from "zod";
 import fs from "fs";
 import path from "path";
 
+export async function DELETE(req: Request) {
+  const auth = await requireApiRole(["TA", "PROFESSOR", "ADMIN"]);
+  if (isErrorResponse(auth)) return auth;
+
+  const body = await req.json();
+  const { submissionId } = body;
+
+  if (!submissionId) {
+    return NextResponse.json({ error: "submissionId is required" }, { status: 400 });
+  }
+
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+  });
+
+  if (!submission) {
+    return NextResponse.json({ error: "Submission not found" }, { status: 404 });
+  }
+
+  const updated = await prisma.submission.update({
+    where: { id: submissionId },
+    data: {
+      totalScore: null,
+      feedback: null,
+      gradedAt: null,
+      gradedById: null,
+      aiScore: null,
+      aiFeedback: null,
+    },
+  });
+
+  return NextResponse.json({ data: updated });
+}
+
 const GradeSchema = z.object({
   submissionId: z.string(),
   totalScore: z.number().min(0),
@@ -45,6 +79,9 @@ export async function POST(req: Request) {
       feedback: body.data.feedback || null,
       gradedAt: new Date(),
       gradedById: auth.user.id,
+    },
+    include: {
+      gradedBy: { select: { name: true } },
     },
   });
 
