@@ -8,6 +8,8 @@
 
 # testing
 /coverage
+/tests/
+playwright.config.ts
 
 # next.js
 /.next/
@@ -40,6 +42,9 @@ next-env.d.ts
 /docs/screenshots/
 /test-results/
 /.playwright-mcp/
+
+# seed (contains personal info)
+prisma/seed.ts
 
 # uploads
 /public/uploads/
