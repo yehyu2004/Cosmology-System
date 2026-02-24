@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import {
   Sparkles,
@@ -14,6 +14,9 @@ import {
   ClipboardList,
   User,
   FileText,
+  BookOpen,
+  Brain,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -68,10 +71,12 @@ export default function GradingPage() {
   const [feedback, setFeedback] = useState("");
   const [saving, setSaving] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiPhase, setAiPhase] = useState<"extracting" | "analyzing" | "generating" | null>(null);
   const [returning, setReturning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
+  const aiAbortRef = useRef<string | null>(null);
 
   // Assignment picker state
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -121,33 +126,105 @@ export default function GradingPage() {
 
   function selectSubmission(sub: Submission) {
     setSelectedSubmission(sub);
-    setScore(sub.totalScore != null ? String(Number(sub.totalScore)) : "");
-    setFeedback(sub.feedback || "");
+    if (sub.totalScore != null) {
+      // Already graded — show the existing grade
+      setScore(String(Number(sub.totalScore)));
+      setFeedback(sub.feedback || "");
+    } else if (sub.aiScore != null && sub.aiFeedback) {
+      // AI already ran — pre-fill with AI suggestions
+      setScore(String(Number(sub.aiScore)));
+      setFeedback(sub.aiFeedback);
+    } else {
+      setScore("");
+      setFeedback("");
+    }
   }
 
-  async function handleAiAssist() {
-    if (!selectedSubmission) return;
+  const runAiGrading = useCallback(async (submissionId: string) => {
+    aiAbortRef.current = submissionId;
     setAiLoading(true);
+    setAiPhase("extracting");
+
+    const phaseTimer1 = setTimeout(() => {
+      if (aiAbortRef.current === submissionId) setAiPhase("analyzing");
+    }, 2000);
+    const phaseTimer2 = setTimeout(() => {
+      if (aiAbortRef.current === submissionId) setAiPhase("generating");
+    }, 5000);
+
     try {
       const res = await fetch("/api/grading", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ submissionId: selectedSubmission.id }),
+        body: JSON.stringify({ submissionId }),
       });
       const data = await res.json();
+
+      // If user navigated away from this submission, discard results
+      if (aiAbortRef.current !== submissionId) return;
+
       if (!res.ok) {
         toast.error(data.error || "AI grading failed");
         return;
       }
+
       setScore(String(data.data.score));
       setFeedback(data.data.feedback);
-      toast.success("AI suggestion loaded");
+
+      // Update the submission in the list with AI results
+      setSelectedSubmission((prev) =>
+        prev?.id === submissionId
+          ? { ...prev, aiScore: data.data.score, aiFeedback: data.data.feedback }
+          : prev
+      );
+      setSubmissions((prev) =>
+        prev.map((s) =>
+          s.id === submissionId
+            ? { ...s, aiScore: data.data.score, aiFeedback: data.data.feedback }
+            : s
+        )
+      );
+
+      toast.success("AI grading complete — review the suggestions below");
     } catch (err) {
+      if (aiAbortRef.current !== submissionId) return;
       console.error("[grading:ai-assist]", { error: err instanceof Error ? err.message : String(err) });
       toast.error("AI grading failed");
     } finally {
-      setAiLoading(false);
+      clearTimeout(phaseTimer1);
+      clearTimeout(phaseTimer2);
+      if (aiAbortRef.current === submissionId) {
+        setAiLoading(false);
+        setAiPhase(null);
+        aiAbortRef.current = null;
+      }
     }
+  }, []);
+
+  // Auto-trigger AI grading for ungraded submissions with a file
+  useEffect(() => {
+    if (
+      selectedSubmission &&
+      !selectedSubmission.gradedAt &&
+      selectedSubmission.fileUrl &&
+      selectedSubmission.aiScore == null &&
+      !selectedSubmission.aiFeedback &&
+      !aiLoading
+    ) {
+      runAiGrading(selectedSubmission.id);
+    }
+    // Cancel if user navigates away
+    return () => {
+      if (aiAbortRef.current && aiAbortRef.current !== selectedSubmission?.id) {
+        aiAbortRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSubmission?.id]);
+
+  function handleAiAssist() {
+    if (!selectedSubmission) return;
+    runAiGrading(selectedSubmission.id);
   }
 
   async function handleSaveGrade() {
@@ -577,9 +654,84 @@ export default function GradingPage() {
                           className="gap-1.5"
                         >
                           <Sparkles className="w-3.5 h-3.5" />
-                          {aiLoading ? "Analyzing..." : "AI Assist"}
+                          {aiLoading ? "Running..." : "Re-run AI"}
                         </Button>
                       </div>
+
+                      {/* AI Loading State */}
+                      {aiLoading && (
+                        <div className="px-4 py-6 border-b border-gray-100 dark:border-gray-800">
+                          <div className="flex flex-col items-center text-center space-y-4">
+                            <div className="relative">
+                              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/40 dark:to-violet-900/40 flex items-center justify-center">
+                                <Sparkles className="w-7 h-7 text-indigo-500 dark:text-indigo-400 animate-pulse" />
+                              </div>
+                              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-indigo-500 animate-ping opacity-40" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                AI is grading this report
+                              </p>
+                              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                                You can read the PDF while waiting
+                              </p>
+                            </div>
+
+                            {/* Progress Steps */}
+                            <div className="w-full max-w-xs space-y-2">
+                              {([
+                                { key: "extracting" as const, icon: BookOpen, label: "Extracting text from PDF..." },
+                                { key: "analyzing" as const, icon: Brain, label: "Analyzing cosmological content..." },
+                                { key: "generating" as const, icon: MessageSquare, label: "Writing feedback..." },
+                              ]).map((step, i) => {
+                                const phases = ["extracting", "analyzing", "generating"] as const;
+                                const currentIdx = aiPhase ? phases.indexOf(aiPhase) : -1;
+                                const stepIdx = phases.indexOf(step.key);
+                                const isActive = stepIdx === currentIdx;
+                                const isDone = stepIdx < currentIdx;
+                                const isPending = stepIdx > currentIdx;
+
+                                return (
+                                  <div
+                                    key={step.key}
+                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-500 ${
+                                      isActive
+                                        ? "bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800"
+                                        : isDone
+                                          ? "bg-emerald-50/50 dark:bg-emerald-950/20"
+                                          : ""
+                                    }`}
+                                  >
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors duration-500 ${
+                                      isActive
+                                        ? "bg-indigo-500 text-white"
+                                        : isDone
+                                          ? "bg-emerald-500 text-white"
+                                          : "bg-gray-100 dark:bg-gray-800 text-gray-400"
+                                    }`}>
+                                      {isDone ? (
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                      ) : (
+                                        <step.icon className={`w-3.5 h-3.5 ${isActive ? "animate-pulse" : ""}`} />
+                                      )}
+                                    </div>
+                                    <span className={`text-xs font-medium transition-colors duration-500 ${
+                                      isActive
+                                        ? "text-indigo-700 dark:text-indigo-300"
+                                        : isDone
+                                          ? "text-emerald-600 dark:text-emerald-400"
+                                          : "text-gray-400 dark:text-gray-500"
+                                    }`}>
+                                      {isDone ? step.label.replace("...", "") : step.label}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="p-4 space-y-4">
                         <div>
                           <Label htmlFor="score">
@@ -592,7 +744,8 @@ export default function GradingPage() {
                             max={maxPoints}
                             value={score}
                             onChange={(e) => setScore(e.target.value)}
-                            placeholder="0"
+                            placeholder={aiLoading ? "AI will suggest a score..." : "0"}
+                            disabled={aiLoading}
                           />
                         </div>
 
@@ -602,21 +755,11 @@ export default function GradingPage() {
                             id="feedback"
                             value={feedback}
                             onChange={(e) => setFeedback(e.target.value)}
-                            placeholder="Provide feedback on the student's report..."
+                            placeholder={aiLoading ? "AI is generating feedback..." : "Provide feedback on the student's report..."}
                             rows={8}
+                            disabled={aiLoading}
                           />
                         </div>
-
-                        {selectedSubmission.aiFeedback && (
-                          <div className="p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800">
-                            <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mb-1">
-                              AI Suggestion: {Number(selectedSubmission.aiScore)} pts
-                            </p>
-                            <p className="text-sm text-indigo-800 dark:text-indigo-300 whitespace-pre-wrap">
-                              {selectedSubmission.aiFeedback}
-                            </p>
-                          </div>
-                        )}
 
                         <div className="space-y-2">
                           <div className="flex justify-end gap-2">
@@ -624,7 +767,7 @@ export default function GradingPage() {
                               <Button
                                 variant="outline"
                                 onClick={handleReturnAssignment}
-                                disabled={returning}
+                                disabled={returning || aiLoading}
                                 className="gap-2"
                                 title="Clear the grade and allow the student to resubmit"
                               >
@@ -632,7 +775,7 @@ export default function GradingPage() {
                                 {returning ? "Returning..." : "Return to Student"}
                               </Button>
                             )}
-                            <Button onClick={handleSaveGrade} disabled={saving || !score}>
+                            <Button onClick={handleSaveGrade} disabled={saving || !score || aiLoading}>
                               {saving
                                 ? "Saving..."
                                 : selectedSubmission.gradedAt
