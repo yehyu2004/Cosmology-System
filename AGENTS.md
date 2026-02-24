@@ -107,7 +107,10 @@ Format: `console.error("[module:action]", { key: value })`.
 - No magic numbers — extract named constants
 - Guard clauses over nested conditionals
 
-#### 7.2 No AI Slop
+#### 7.2 Keep README.md Up to Date
+When making changes that affect features, rubric, project structure, or tech stack, update `README.md` to reflect those changes in the same commit.
+
+#### 7.3 No AI Slop
 - No comments restating obvious code
 - No unnecessary try/catch on trusted paths
 - No `as any` without justification
