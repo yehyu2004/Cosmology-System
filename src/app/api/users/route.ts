@@ -72,7 +72,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const authResult = await requireApiRole(["TA", "PROFESSOR", "ADMIN"]);
+  const authResult = await requireApiRole(["ADMIN"]);
   if (isErrorResponse(authResult)) return authResult;
 
   const { userId } = await req.json();

@@ -128,6 +128,10 @@ ${FEEDBACK_FORMAT}`;
   const content = response.output_text;
   if (!content) return null;
 
-  const parsed = JSON.parse(content);
-  return validateResult(parsed);
+  try {
+    const parsed = JSON.parse(content);
+    return validateResult(parsed);
+  } catch {
+    return null;
+  }
 }

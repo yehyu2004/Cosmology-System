@@ -13,6 +13,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "assignmentId and fileUrl are required" }, { status: 400 });
   }
 
+  // Validate fileUrl points to an uploaded file
+  if (typeof fileUrl !== "string" || !/^\/uploads\/\d+-[\w._-]+\.pdf$/i.test(fileUrl)) {
+    return NextResponse.json({ error: "Invalid file URL" }, { status: 400 });
+  }
+
   const assignment = await prisma.assignment.findUnique({
     where: { id: assignmentId },
   });

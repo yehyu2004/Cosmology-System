@@ -6,7 +6,10 @@ export async function middleware(request: NextRequest) {
   if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) {
     const origin = request.headers.get("origin");
     const host = request.headers.get("host");
-    if (origin && host) {
+    if (!origin) {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+    if (host) {
       const originHost = new URL(origin).host;
       if (originHost !== host) {
         return new NextResponse("Forbidden", { status: 403 });
@@ -44,6 +47,7 @@ export const config = {
     "/grading/:path*",
     "/simulations/:path*",
     "/settings/:path*",
+    "/admin/:path*",
     "/api/((?!auth).*)",
   ],
 };

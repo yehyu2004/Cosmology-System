@@ -28,6 +28,15 @@ export async function POST(req: Request) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
+  if (buffer.byteLength > MAX_FILE_SIZE) {
+    return NextResponse.json({ error: "File too large (max 20MB)" }, { status: 413 });
+  }
+
+  // Verify PDF magic bytes (%PDF-)
+  if (buffer.length < 5 || buffer.toString("utf8", 0, 5) !== "%PDF-") {
+    return NextResponse.json({ error: "Invalid PDF file" }, { status: 400 });
+  }
+
   const uploadDir = path.resolve(process.cwd(), "public", "uploads");
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });

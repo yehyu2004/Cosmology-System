@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireApiRole, getEffectiveUser, isErrorResponse } from "@/lib/api-auth";
+import { z } from "zod";
+
+const UpdateAssignmentSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  description: z.string().max(5000).optional().nullable(),
+  dueDate: z.string().datetime().optional().nullable(),
+  totalPoints: z.number().min(0).max(10000).optional(),
+  published: z.boolean().optional(),
+  rubric: z.string().max(10000).optional().nullable(),
+  pdfUrl: z.string().max(500).optional().nullable(),
+}).strict();
 
 export async function GET(
   req: NextRequest,
@@ -47,8 +58,12 @@ export async function PATCH(
   const auth = await requireApiRole(["TA", "PROFESSOR", "ADMIN"]);
   if (isErrorResponse(auth)) return auth;
 
-  const body = await req.json();
+  const parsed = UpdateAssignmentSchema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+  }
 
+  const body = parsed.data;
   const assignment = await prisma.assignment.update({
     where: { id: params.id },
     data: {

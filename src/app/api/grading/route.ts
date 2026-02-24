@@ -7,6 +7,20 @@ import { z } from "zod";
 import fs from "fs";
 import path from "path";
 
+// Simple in-memory rate limiter for AI grading (per user, 5 requests per minute)
+const aiRateLimit = new Map<string, number[]>();
+const AI_RATE_LIMIT = 5;
+const AI_RATE_WINDOW = 60_000;
+
+function checkAiRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const timestamps = (aiRateLimit.get(userId) || []).filter((t) => now - t < AI_RATE_WINDOW);
+  if (timestamps.length >= AI_RATE_LIMIT) return false;
+  timestamps.push(now);
+  aiRateLimit.set(userId, timestamps);
+  return true;
+}
+
 export async function DELETE(req: Request) {
   const auth = await requireApiRole(["TA", "PROFESSOR", "ADMIN"]);
   if (isErrorResponse(auth)) return auth;
@@ -93,6 +107,10 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   const auth = await requireApiRole(["TA", "PROFESSOR", "ADMIN"]);
   if (isErrorResponse(auth)) return auth;
+
+  if (!checkAiRateLimit(auth.user.id)) {
+    return NextResponse.json({ error: "Too many AI grading requests. Please wait a minute." }, { status: 429 });
+  }
 
   const { submissionId } = await req.json();
   if (!submissionId) {
