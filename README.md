@@ -7,7 +7,7 @@ A teaching assistant platform for an Observational Cosmology course at NTHU. Stu
 - **Framework**: Next.js 14 (App Router, TypeScript)
 - **Database**: PostgreSQL + Prisma ORM
 - **Auth**: NextAuth.js v5 — Google OAuth (@gapp.nthu.edu.tw)
-- **AI Grading**: OpenAI GPT-4o with structured rubric
+- **AI Grading**: OpenAI GPT-5.2 with structured rubric
 - **Styling**: TailwindCSS + shadcn/ui
 - **Charts**: Plotly.js for cosmology simulations
 
@@ -44,7 +44,7 @@ npm run dev
 - File uploads stored in `public/uploads/` (development) — switch to Vercel Blob or S3 for production
 
 ### AI-Assisted Grading
-Reports are graded by GPT-4o with a structured rubric tailored to anime-cosmology reports:
+Reports are graded by GPT-5.2 with a structured rubric tailored to anime-cosmology reports:
 
 | Category | Points | Focus |
 |----------|--------|-------|
