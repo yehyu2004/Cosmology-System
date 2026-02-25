@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, FileText, Calendar, Users, CheckCircle, Clock } from "lucide-react";
+import { Plus, FileText, Calendar, Users, CheckCircle, Clock, TableProperties } from "lucide-react";
 import { useEffectiveRole } from "@/components/providers/EffectiveRoleContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,14 +49,22 @@ export default function AssignmentsPage() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Assignments</h1>
-        {isStaff && (
-          <Link href="/assignments/create">
-            <Button className="gap-2 h-11" size="default">
-              <Plus className="w-4 h-4" />
-              Create Assignment
+        <div className="flex items-center gap-2">
+          <Link href="/rubric">
+            <Button variant="outline" className="gap-2 h-11" size="default">
+              <TableProperties className="w-4 h-4" />
+              View Rubric
             </Button>
           </Link>
-        )}
+          {isStaff && (
+            <Link href="/assignments/create">
+              <Button className="gap-2 h-11" size="default">
+                <Plus className="w-4 h-4" />
+                Create Assignment
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       {assignments.length === 0 ? (
