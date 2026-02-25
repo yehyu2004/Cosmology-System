@@ -51,8 +51,8 @@ Reports are graded by GPT-5.2 with a structured rubric tailored to anime-cosmolo
 | Anime Introduction | 10 | Plot summary, themes, genuine familiarity |
 | Cosmology-Anime Connection | 30 | Specific cosmological concepts tied to scenes |
 | Cosmological Concepts | 30 | Real science explained accurately, beyond anime |
-| References | 15 | Credible sources, proper citations |
-| Writing Quality | 15 | Structure, flow, grammar |
+| References | 10 | Credible sources, proper citations |
+| Writing Quality | 20 | Structure, flow, grammar |
 
 The AI grader uses a professor persona — knowledgeable, direct, constructive. It also checks for proper use of significant figures in any numerical values. TAs review all AI suggestions before finalizing grades.
 

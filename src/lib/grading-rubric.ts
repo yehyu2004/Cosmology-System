@@ -36,8 +36,8 @@ export const CATEGORY_META: CategoryMeta[] = [
   { key: "animeIntroduction", label: "Anime Introduction", maxScore: 10 },
   { key: "cosmologyAnimeConnection", label: "Cosmology-Anime Connection", maxScore: 30 },
   { key: "cosmologicalConcepts", label: "Cosmological Concepts", maxScore: 30 },
-  { key: "references", label: "References", maxScore: 15 },
-  { key: "writingQuality", label: "Writing Quality", maxScore: 15 },
+  { key: "references", label: "References", maxScore: 10 },
+  { key: "writingQuality", label: "Writing Quality", maxScore: 20 },
 ];
 
 // ---------------------------------------------------------------------------
@@ -86,20 +86,20 @@ Cosmological Concepts (30 points):
    5: Mentions concepts by name only, with no real explanation.
    0: No cosmological content beyond the anime discussion.
 
-References (15 points):
-  15: 3+ credible references, properly cited (see credible reference definition below).
-  12: 2 credible references with proper citations.
-   9: 1 credible reference with proper citation.
-   6: References listed but none are credible or relevant to cosmology.
-   3: Only non-credible references (anime wikis, blogs, AI-generated summaries).
+References (10 points):
+  10: 3+ credible references, properly cited (see credible reference definition below).
+   8: 2 credible references with proper citations.
+   6: 1 credible reference with proper citation.
+   4: References listed but none are credible or relevant to cosmology.
+   2: Only non-credible references (anime wikis, blogs, AI-generated summaries).
    0: No references.
 
-Writing Quality (15 points):
-  15: Clear structure (intro, body, conclusion), logical flow, minimal grammar/spelling errors.
-  12: Mostly clear with minor structural issues or a few grammar errors.
-   9: Readable but disorganized or frequent grammar issues.
-   6: Poorly organized and difficult to follow.
-   3: Mostly incoherent but some content is discernible.
+Writing Quality (20 points):
+  20: Clear structure (intro, body, conclusion), logical flow, minimal grammar/spelling errors.
+  16: Mostly clear with minor structural issues or a few grammar errors.
+  12: Readable but disorganized or frequent grammar issues.
+   8: Poorly organized and difficult to follow.
+   4: Mostly incoherent but some content is discernible.
    0: Incoherent or unreadable.
 
 Credible reference definition:
@@ -133,8 +133,8 @@ export const FEEDBACK_FORMAT = `You MUST respond with a single JSON object in ex
     "animeIntroduction":        { "score": <int>, "maxScore": 10, "rationale": "<1-2 sentences>" },
     "cosmologyAnimeConnection": { "score": <int>, "maxScore": 30, "rationale": "<1-2 sentences>" },
     "cosmologicalConcepts":     { "score": <int>, "maxScore": 30, "rationale": "<1-2 sentences>" },
-    "references":               { "score": <int>, "maxScore": 15, "rationale": "<1-2 sentences>" },
-    "writingQuality":           { "score": <int>, "maxScore": 15, "rationale": "<1-2 sentences>" }
+    "references":               { "score": <int>, "maxScore": 10, "rationale": "<1-2 sentences>" },
+    "writingQuality":           { "score": <int>, "maxScore": 20, "rationale": "<1-2 sentences>" }
   },
   "feedback": "<overall 2-4 sentence constructive feedback with one specific suggestion for improvement>"
 }
@@ -151,30 +151,30 @@ Rules:
 
 export const CALIBRATION_EXAMPLES = `Here are two graded examples to calibrate your scoring:
 
-EXAMPLE A — Score: 65/100
+EXAMPLE A — Score: 63/100
 Student report on Steins;Gate and time travel cosmology.
 {
-  "score": 65,
+  "score": 63,
   "categories": {
     "animeIntroduction":        { "score": 8,  "maxScore": 10, "rationale": "Names Steins;Gate and summarizes the plot, but does not identify cosmological themes explicitly." },
     "cosmologyAnimeConnection": { "score": 15, "maxScore": 30, "rationale": "Identifies time dilation as a concept but the connection to specific scenes is vague." },
     "cosmologicalConcepts":     { "score": 20, "maxScore": 30, "rationale": "Explains general relativity and time dilation at a basic level; correct but shallow." },
-    "references":               { "score": 12, "maxScore": 15, "rationale": "Cites the course textbook and one NASA page." },
-    "writingQuality":           { "score": 10, "maxScore": 15, "rationale": "Readable with a clear intro and conclusion, but the body lacks logical flow between sections." }
+    "references":               { "score": 8,  "maxScore": 10, "rationale": "Cites the course textbook and one NASA page." },
+    "writingQuality":           { "score": 12, "maxScore": 20, "rationale": "Readable with a clear intro and conclusion, but the body lacks logical flow between sections." }
   },
   "feedback": "Solid choice of anime with genuine cosmological content. The report would improve significantly by connecting specific Steins;Gate scenes (e.g., the microwave time-leap mechanism) to concrete physics concepts rather than discussing time dilation in the abstract."
 }
 
-EXAMPLE B — Score: 88/100
+EXAMPLE B — Score: 86/100
 Student report on Interstellar and black hole physics.
 {
-  "score": 88,
+  "score": 86,
   "categories": {
     "animeIntroduction":        { "score": 10, "maxScore": 10, "rationale": "Thorough plot summary of Interstellar with themes of gravitational time dilation and singularities clearly identified." },
     "cosmologyAnimeConnection": { "score": 25, "maxScore": 30, "rationale": "Connects Gargantua's accretion disk, time dilation on Miller's planet, and the tesseract to real physics with specific scene timestamps." },
     "cosmologicalConcepts":     { "score": 25, "maxScore": 30, "rationale": "Accurately explains Kerr black holes, gravitational lensing, and tidal forces with references to Thorne's work; minor imprecision on Penrose diagrams." },
-    "references":               { "score": 15, "maxScore": 15, "rationale": "Cites Thorne's 'The Science of Interstellar', two ArXiv papers, and NASA's black hole FAQ." },
-    "writingQuality":           { "score": 13, "maxScore": 15, "rationale": "Well-structured with clear sections; a few grammatical errors in the conclusion." }
+    "references":               { "score": 10, "maxScore": 10, "rationale": "Cites Thorne's 'The Science of Interstellar', two ArXiv papers, and NASA's black hole FAQ." },
+    "writingQuality":           { "score": 16, "maxScore": 20, "rationale": "Well-structured with clear sections; a few grammatical errors in the conclusion." }
   },
   "feedback": "Excellent report that goes well beyond surface-level analysis. The Penrose diagram discussion could be tightened — the causal structure inside the event horizon was slightly misstated. Consider adding a quantitative estimate of the time dilation factor on Miller's planet to strengthen the physics further."
 }`;
