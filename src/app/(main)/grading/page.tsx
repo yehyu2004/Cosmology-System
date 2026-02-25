@@ -18,6 +18,8 @@ import {
   Brain,
   MessageSquare,
   Download,
+  PanelLeftOpen,
+  PanelLeftClose,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -124,6 +126,7 @@ export default function GradingPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerSearch, setPickerSearch] = useState("");
   const [pickerFilter, setPickerFilter] = useState<PickerFilter>("all");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     fetch("/api/assignments")
@@ -519,16 +522,26 @@ export default function GradingPage() {
       ) : (
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:h-[calc(100vh-16rem)]">
           {/* Submission List */}
+          {!sidebarCollapsed ? (
           <div className="w-full md:w-80 shrink-0 flex flex-col bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm max-h-[40vh] md:max-h-none">
-            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Submissions ({filteredSubmissions.length})
-              </h2>
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Submissions ({filteredSubmissions.length})
+                </h2>
               {selectedAssignment && (
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
                   {selectedAssignment.title} &middot; {maxPoints} pts
                 </p>
               )}
+              </div>
+              <button
+                onClick={() => setSidebarCollapsed(true)}
+                className="hidden md:flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                title="Hide submissions list"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </button>
             </div>
             <div className="flex-1 overflow-auto p-2 space-y-1.5">
               {filteredSubmissions.length === 0 ? (
@@ -620,6 +633,7 @@ export default function GradingPage() {
               )}
             </div>
           </div>
+          ) : null}
 
           {/* Grading Panel */}
           <div className="flex-1 flex flex-col bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
@@ -627,6 +641,15 @@ export default function GradingPage() {
               <>
                 {/* Panel Header */}
                 <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
+                  {sidebarCollapsed && (
+                    <button
+                      onClick={() => setSidebarCollapsed(false)}
+                      className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mr-1"
+                      title="Show submissions list"
+                    >
+                      <PanelLeftOpen className="w-4 h-4" />
+                    </button>
+                  )}
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0">
                       <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
@@ -901,7 +924,16 @@ export default function GradingPage() {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-6 relative">
+                {sidebarCollapsed && (
+                  <button
+                    onClick={() => setSidebarCollapsed(false)}
+                    className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors absolute top-4 left-4"
+                    title="Show submissions list"
+                  >
+                    <PanelLeftOpen className="w-4 h-4" />
+                  </button>
+                )}
                 <ClipboardList className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Select a submission to grade
