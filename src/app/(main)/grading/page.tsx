@@ -127,6 +127,7 @@ export default function GradingPage() {
   const [pickerSearch, setPickerSearch] = useState("");
   const [pickerFilter, setPickerFilter] = useState<PickerFilter>("all");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const hasAutoSelected = useRef(false);
 
   useEffect(() => {
     fetch("/api/assignments")
@@ -135,6 +136,18 @@ export default function GradingPage() {
       .catch((err) => console.error("[grading:fetch-assignments]", { error: err.message }))
       .finally(() => setLoading(false));
   }, []);
+
+  // Auto-select the assignment with the most ungraded submissions on initial load
+  useEffect(() => {
+    if (hasAutoSelected.current || assignments.length === 0 || selectedAssignmentId) return;
+    hasAutoSelected.current = true;
+    const best = assignments.reduce((prev, curr) =>
+      curr.ungradedCount > prev.ungradedCount ? curr : prev
+    );
+    if (best.ungradedCount > 0) {
+      setSelectedAssignmentId(best.id);
+    }
+  }, [assignments, selectedAssignmentId]);
 
   useEffect(() => {
     if (!selectedAssignmentId) return;
@@ -361,7 +374,7 @@ export default function GradingPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" role="status" aria-label="Loading" />
       </div>
     );
   }
@@ -517,7 +530,7 @@ export default function GradingPage() {
         </div>
       ) : loadingSubmissions ? (
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" role="status" aria-label="Loading" />
         </div>
       ) : (
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:h-[calc(100vh-16rem)]">

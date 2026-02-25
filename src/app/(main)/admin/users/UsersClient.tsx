@@ -224,14 +224,11 @@ export default function UsersClient({ users: initialUsers, currentUserId, curren
         />
       </div>
 
-      {/* User Table */}
+      {/* Desktop User Table */}
       <div
-        className="animate-fade-in card-minimal overflow-hidden"
+        className="animate-fade-in card-minimal overflow-hidden hidden md:block"
         style={{ animationDelay: "240ms" }}
       >
-        <p className="px-5 py-2 text-xs text-gray-400 dark:text-gray-500 md:hidden">
-          Swipe to see more columns
-        </p>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -365,6 +362,117 @@ export default function UsersClient({ users: initialUsers, currentUserId, curren
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile Card Layout */}
+      <div
+        className="animate-fade-in md:hidden space-y-3"
+        style={{ animationDelay: "240ms" }}
+      >
+        {filtered.length === 0 ? (
+          <div className="px-5 py-10 text-center text-sm text-gray-400">
+            No users found.
+          </div>
+        ) : (
+          filtered.map((user) => {
+            const initials = (user.name || user.email)
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase();
+            const isSelf = user.id === currentUserId;
+            const config = ROLE_CONFIG[user.role];
+
+            return (
+              <div
+                key={user.id}
+                className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 rounded-lg p-4 space-y-3"
+              >
+                {/* Avatar + Name */}
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={user.image || undefined} />
+                    <AvatarFallback className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {user.name || "Unnamed"}
+                    {isSelf && (
+                      <span className="ml-1.5 text-xs text-gray-400">(you)</span>
+                    )}
+                  </p>
+                </div>
+
+                {/* Email */}
+                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+
+                {/* Student ID */}
+                {user.studentId && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Student ID: {user.studentId}
+                  </p>
+                )}
+
+                {/* Role */}
+                <div>
+                  {isSelf || currentUserRole !== "ADMIN" ? (
+                    <Badge className={`${config.bg} ${config.color} text-xs`}>
+                      {config.label}
+                    </Badge>
+                  ) : (
+                    <select
+                      value={user.role}
+                      onChange={(e) => handleRoleChange(user.id, e.target.value as Role)}
+                      disabled={updating === user.id}
+                      className="text-sm rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 transition-colors"
+                    >
+                      {ROLES.map((r) => (
+                        <option key={r} value={r}>
+                          {ROLE_CONFIG[r].label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {/* Actions */}
+                {!isSelf && (currentUserRole === "ADMIN" || canDelete(user.role)) && (
+                  <div className="flex items-center gap-2">
+                    {currentUserRole === "ADMIN" && (
+                      <button
+                        onClick={() => handleImpersonate(user.id)}
+                        disabled={impersonating === user.id}
+                        title={`View as ${user.name || user.email}`}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50"
+                      >
+                        <UserCheck className="w-3.5 h-3.5" />
+                        Impersonate
+                      </button>
+                    )}
+                    {canDelete(user.role) && (
+                      <button
+                        onClick={() => handleDeleteUser(user.id, user.name || user.email)}
+                        disabled={deleting === user.id}
+                        title={`Delete ${user.name || user.email}`}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        {deleting === user.id ? "Deleting..." : "Delete"}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Joined Date */}
+                <p className="text-xs text-gray-500">
+                  Joined {new Date(user.createdAt).toLocaleDateString("en-CA")}
+                </p>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

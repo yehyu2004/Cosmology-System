@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { GraduationCap } from "lucide-react";
 
 interface GradeEntry {
   id: string;
@@ -34,7 +36,7 @@ export default function GradesPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" role="status" aria-label="Loading" />
       </div>
     );
   }
@@ -44,11 +46,21 @@ export default function GradesPage() {
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Grades</h1>
 
       {grades.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-gray-500">
+        <div className="flex flex-col items-center justify-center py-16">
+          <GraduationCap className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-4" />
+          <p className="text-lg font-medium text-gray-900 dark:text-white">
             No graded submissions yet.
-          </CardContent>
-        </Card>
+          </p>
+          <p className="text-sm text-gray-500 mt-1">
+            Your grades will appear here once your submissions are reviewed.
+          </p>
+          <Link
+            href="/assignments"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-700 transition-colors"
+          >
+            View Assignments
+          </Link>
+        </div>
       ) : (
         <div className="grid gap-4">
           {grades.map((entry) => (

@@ -50,7 +50,6 @@ const NAV_ITEMS = [
 export default function MainLayoutClient({
   children,
   userName,
-  userEmail,
   userImage,
   userRole,
   isImpersonating,
@@ -102,7 +101,7 @@ export default function MainLayoutClient({
           {collapsed ? (
             <button
               onClick={() => setCollapsed(false)}
-              className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+              className="flex items-center justify-center w-11 h-11 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
               aria-label="Expand sidebar"
             >
               <PanelLeftOpen className="w-5 h-5 text-blue-400" />
@@ -115,11 +114,11 @@ export default function MainLayoutClient({
           {!collapsed && (
             <>
               <div className="flex-1 min-w-0">
-                <h1 className="text-sm font-bold text-gray-900 dark:text-white">Cosmo</h1>
+                <span className="text-sm font-bold text-gray-900 dark:text-white">Cosmo</span>
               </div>
               <button
                 onClick={() => setCollapsed(true)}
-                className="hidden lg:flex items-center justify-center w-7 h-7 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
+                className="hidden lg:flex items-center justify-center w-11 h-11 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
                 aria-label="Collapse sidebar"
               >
                 <PanelLeftClose className="w-4 h-4" />
@@ -171,8 +170,9 @@ export default function MainLayoutClient({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                className="h-11 w-11 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                aria-label="Toggle theme"
                 title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
               >
                 <Sun className="w-4 h-4 hidden dark:block" />
@@ -181,7 +181,7 @@ export default function MainLayoutClient({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-gray-500 hover:text-red-600 dark:hover:text-red-400"
+                className="h-11 w-11 text-gray-500 hover:text-red-600 dark:hover:text-red-400"
                 onClick={() => signOut({ callbackUrl: "/login" })}
                 title="Sign out"
               >
@@ -205,8 +205,8 @@ export default function MainLayoutClient({
               <div className="flex gap-1">
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="flex-1 justify-start text-gray-500 hover:text-red-600 dark:hover:text-red-400"
+                  size="default"
+                  className="h-11 flex-1 justify-start text-gray-500 hover:text-red-600 dark:hover:text-red-400"
                   onClick={() => signOut({ callbackUrl: "/login" })}
                 >
                   <LogOut className="w-4 h-4 mr-2" />
@@ -215,8 +215,9 @@ export default function MainLayoutClient({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="h-11 w-11 shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  aria-label="Toggle theme"
                   title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
                 >
                   <Sun className="w-4 h-4 hidden dark:block" />

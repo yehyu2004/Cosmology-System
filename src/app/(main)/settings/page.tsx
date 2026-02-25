@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useEffectiveRole } from "@/components/providers/EffectiveRoleContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,7 +17,9 @@ export default function SettingsPage() {
   const [studentId, setStudentId] = useState("");
   const [savedStudentId, setSavedStudentId] = useState("");
   const [saving, setSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const justSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -51,6 +53,11 @@ export default function SettingsPage() {
       setStudentId(id);
       setSavedStudentId(id);
       setFeedback({ type: "success", message: "Student ID saved" });
+
+      // Show "Saved!" on the button for 2 seconds
+      setJustSaved(true);
+      if (justSavedTimerRef.current) clearTimeout(justSavedTimerRef.current);
+      justSavedTimerRef.current = setTimeout(() => setJustSaved(false), 2000);
     } catch (err) {
       setFeedback({ type: "error", message: err instanceof Error ? err.message : "Failed to save" });
     } finally {
@@ -122,8 +129,40 @@ export default function SettingsPage() {
             </p>
           )}
 
-          <Button onClick={handleSave} disabled={saving || !hasChanges}>
-            {saving ? "Saving..." : "Save"}
+          <Button
+            onClick={handleSave}
+            disabled={saving || !hasChanges}
+            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed h-11 px-6 rounded-lg font-medium"
+          >
+            {saving ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
+                Saving...
+              </>
+            ) : justSaved ? (
+              "Saved!"
+            ) : (
+              "Save"
+            )}
           </Button>
         </CardContent>
       </Card>

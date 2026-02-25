@@ -40,7 +40,7 @@ export default function AssignmentsPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" role="status" aria-label="Loading" />
       </div>
     );
   }
@@ -51,7 +51,7 @@ export default function AssignmentsPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Assignments</h1>
         {isStaff && (
           <Link href="/assignments/create">
-            <Button className="gap-2" size="sm">
+            <Button className="gap-2 h-11" size="default">
               <Plus className="w-4 h-4" />
               Create Assignment
             </Button>
@@ -84,12 +84,14 @@ export default function AssignmentsPage() {
                       )}
                     </div>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {assignment.dueDate ? formatDateOnly(assignment.dueDate) : "No due date"}
-                      </span>
-                      {isStaff && (
+                      {assignment.dueDate && (
                         <span className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {formatDateOnly(assignment.dueDate)}
+                        </span>
+                      )}
+                      {isStaff && (
+                        <span className={`flex items-center gap-1 ${assignment._count.submissions > 0 ? "text-blue-400" : "text-gray-500"}`}>
                           <Users className="w-3.5 h-3.5" />
                           {assignment._count.submissions} {assignment._count.submissions === 1 ? "submission" : "submissions"}
                         </span>
@@ -110,7 +112,7 @@ export default function AssignmentsPage() {
                       </Badge>
                     )
                   )}
-                  <Badge variant="outline">Report {assignment.reportNumber}</Badge>
+                  <Badge variant="outline" className="text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-700 bg-transparent">Report {assignment.reportNumber}</Badge>
                 </CardContent>
               </Card>
             </Link>
