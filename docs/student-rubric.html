@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Report Grading Rubric — Observational Cosmology</title>
+<style>
+  @page { size: A4; margin: 1.5cm 1.5cm 1.5cm 1.5cm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1a1a1a; line-height: 1.5; padding: 2rem; max-width: 860px; margin: 0 auto; }
+  @media print { body { padding: 0; } }
+
+  h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+  .subtitle { font-size: 0.85rem; color: #666; margin-bottom: 1.5rem; }
+
+  /* ── Point distribution bar ── */
+  .bar-container { margin-bottom: 1.5rem; }
+  .bar-label { font-size: 0.75rem; font-weight: 600; color: #555; margin-bottom: 0.4rem; }
+  .bar { display: flex; border-radius: 6px; overflow: hidden; font-size: 0.7rem; font-weight: 700; color: #fff; }
+  .bar div { text-align: center; padding: 6px 0; }
+  .bar-intro { background: #8b5cf6; width: 10%; }
+  .bar-conn  { background: #3b82f6; width: 30%; }
+  .bar-conc  { background: #06b6d4; width: 30%; }
+  .bar-refs  { background: #f59e0b; width: 10%; }
+  .bar-writ  { background: #f43f5e; width: 20%; }
+  .bar-labels { display: flex; font-size: 0.65rem; color: #888; margin-top: 3px; }
+  .bar-labels div { text-align: center; }
+
+  /* ── Category tables ── */
+  .category { border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; margin-bottom: 1rem; page-break-inside: avoid; }
+  .category-header { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 1rem; border-bottom: 1px solid #e5e7eb; background: #fafafa; }
+  .category-header h2 { font-size: 0.85rem; font-weight: 600; }
+  .pts-badge { font-size: 0.7rem; font-weight: 700; background: #f3f4f6; padding: 2px 8px; border-radius: 999px; color: #555; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  th { text-align: left; padding: 0.35rem 1rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #999; font-weight: 500; }
+  td { padding: 0.45rem 1rem; border-top: 1px solid #f0f0f0; }
+  td:first-child { width: 55px; }
+  .score-badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 22px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
+
+  /* tier row colours */
+  .tier-excellent { background: #ecfdf5; }
+  .tier-excellent .score-badge { background: #a7f3d0; color: #065f46; }
+  .tier-good { background: #eff6ff; }
+  .tier-good .score-badge { background: #bfdbfe; color: #1e3a5f; }
+  .tier-adequate { background: #fefce8; }
+  .tier-adequate .score-badge { background: #fef08a; color: #713f12; }
+  .tier-below { background: #fff7ed; }
+  .tier-below .score-badge { background: #fed7aa; color: #7c2d12; }
+  .tier-poor { background: #fef2f2; }
+  .tier-poor .score-badge { background: #fecaca; color: #7f1d1d; }
+
+  /* ── References box ── */
+  .refs-section { border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; page-break-inside: avoid; }
+  .refs-section h2 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .refs-note { font-size: 0.7rem; color: #888; margin-bottom: 0.6rem; }
+  .refs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .ref-box { border-radius: 8px; padding: 0.75rem; }
+  .ref-box.credible { background: #ecfdf5; }
+  .ref-box.not-credible { background: #fef2f2; }
+  .ref-box p.label { font-size: 0.7rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .ref-box.credible p.label { color: #065f46; }
+  .ref-box.not-credible p.label { color: #7f1d1d; }
+  .ref-box ul { font-size: 0.78rem; padding-left: 1.2rem; }
+  .ref-box.credible ul { color: #064e3b; }
+  .ref-box.not-credible ul { color: #7f1d1d; }
+  .ref-box li { margin-bottom: 0.15rem; }
+
+  /* ── Grade scale ── */
+  .grade-section { border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; page-break-inside: avoid; }
+  .grade-section h2 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .grade-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.4rem; }
+  .grade-cell { border-radius: 8px; padding: 0.5rem; text-align: center; }
+  .grade-cell .range { font-size: 0.85rem; font-weight: 700; }
+  .grade-cell .label { font-size: 0.65rem; font-weight: 500; margin-top: 2px; }
+  .g-excellent { background: #d1fae5; color: #065f46; }
+  .g-good { background: #dbeafe; color: #1e3a5f; }
+  .g-adequate { background: #fef9c3; color: #713f12; }
+  .g-below { background: #ffedd5; color: #7c2d12; }
+  .g-insufficient { background: #fecaca; color: #7f1d1d; }
+
+  .footer { margin-top: 1.5rem; font-size: 0.7rem; color: #aaa; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>Report Grading Rubric</h1>
+<p class="subtitle">Observational Cosmology — Anime/Sci-Fi Report &middot; 100 points total &middot; Between two tiers, the lower score is used.</p>
+
+<!-- Point Distribution -->
+<div class="bar-container">
+  <div class="bar-label">Point Distribution</div>
+  <div class="bar">
+    <div class="bar-intro">10</div>
+    <div class="bar-conn">30</div>
+    <div class="bar-conc">30</div>
+    <div class="bar-refs">10</div>
+    <div class="bar-writ">20</div>
+  </div>
+  <div class="bar-labels">
+    <div style="width:10%">Intro</div>
+    <div style="width:30%">Connection</div>
+    <div style="width:30%">Concepts</div>
+    <div style="width:10%">Refs</div>
+    <div style="width:20%">Writing</div>
+  </div>
+</div>
+
+<!-- 1. Anime Introduction -->
+<div class="category">
+  <div class="category-header">
+    <h2>1. Anime Introduction</h2>
+    <span class="pts-badge">10 pts</span>
+  </div>
+  <table>
+    <thead><tr><th>Score</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr class="tier-excellent"><td><span class="score-badge">10</span></td><td>Names the work, summarizes plot in 3+ sentences, identifies cosmology-relevant themes</td></tr>
+      <tr class="tier-good"><td><span class="score-badge">8</span></td><td>Names the work, reasonable summary, but misses key themes</td></tr>
+      <tr class="tier-adequate"><td><span class="score-badge">6</span></td><td>Names the work with a brief 1&ndash;2 sentence summary</td></tr>
+      <tr class="tier-below"><td><span class="score-badge">4</span></td><td>Mentions the work but only superficial or inaccurate synopsis</td></tr>
+      <tr class="tier-poor"><td><span class="score-badge">2</span></td><td>Barely mentions the work; no meaningful summary</td></tr>
+      <tr class="tier-poor"><td><span class="score-badge">0</span></td><td>Missing or completely off-topic</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 2. Cosmology-Anime Connection -->
+<div class="category">
+  <div class="category-header">
+    <h2>2. Cosmology-Anime Connection</h2>
+    <span class="pts-badge">30 pts</span>
+  </div>
+  <table>
+    <thead><tr><th>Score</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr class="tier-excellent"><td><span class="score-badge">30</span></td><td>3+ cosmological concepts identified with concrete scene references</td></tr>
+      <tr class="tier-good"><td><span class="score-badge">25</span></td><td>2 concepts with scene references, or 3+ concepts without specific scenes</td></tr>
+      <tr class="tier-adequate"><td><span class="score-badge">20</span></td><td>1&ndash;2 concepts with some scene context</td></tr>
+      <tr class="tier-adequate"><td><span class="score-badge">15</span></td><td>1 concept but the connection is vague or superficial</td></tr>
+      <tr class="tier-below"><td><span class="score-badge">10</span></td><td>Mentions cosmology in passing without tying it to the anime</td></tr>
+      <tr class="tier-poor"><td><span class="score-badge">5</span></td><td>Attempts a connection but it is incorrect or incoherent</td></tr>
+      <tr class="tier-poor"><td><span class="score-badge">0</span></td><td>No connection between the anime and cosmology</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 3. Cosmological Concepts -->
+<div class="category">
+  <div class="category-header">
+    <h2>3. Cosmological Concepts</h2>
+    <span class="pts-badge">30 pts</span>
+  </div>
+  <table>
+    <thead><tr><th>Score</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr class="tier-excellent"><td><span class="score-badge">30</span></td><td>3+ real concepts explained accurately, goes beyond anime-level discussion</td></tr>
+      <tr class="tier-good"><td><span class="score-badge">25</span></td><td>2&ndash;3 concepts explained accurately with some depth</td></tr>
+      <tr class="tier-adequate"><td><span class="score-badge">20</span></td><td>1&ndash;2 concepts explained correctly at a basic level</td></tr>
+      <tr class="tier-adequate"><td><span class="score-badge">15</span></td><td>Attempts to explain concepts but contains minor inaccuracies</td></tr>
+      <tr class="tier-below"><td><span class="score-badge">10</span></td><td>Contains significant inaccuracies or misunderstandings</td></tr>
+      <tr class="tier-poor"><td><span class="score-badge">5</span></td><td>Mentions concepts by name only, with no real explanation</td></tr>
+      <tr class="tier-poor"><td><span class="score-badge">0</span></td><td>No cosmological content beyond the anime discussion</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 4. References -->
+<div class="category">
+  <div class="category-header">
+    <h2>4. References</h2>
+    <span class="pts-badge">10 pts</span>
+  </div>
+  <table>
+    <thead><tr><th>Score</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr class="tier-excellent"><td><span class="score-badge">10</span></td><td>3+ credible references, properly cited</td></tr>
+      <tr class="tier-good"><td><span class="score-badge">8</span></td><td>2 credible references with proper citations</td></tr>
+      <tr class="tier-adequate"><td><span class="score-badge">6</span></td><td>1 credible reference with proper citation</td></tr>
+      <tr class="tier-below"><td><span class="score-badge">4</span></td><td>References listed but none are credible or relevant</td></tr>
+      <tr class="tier-poor"><td><span class="score-badge">2</span></td><td>Only non-credible references (anime wikis, blogs, AI summaries)</td></tr>
+      <tr class="tier-poor"><td><span class="score-badge">0</span></td><td>No references</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 5. Writing Quality -->
+<div class="category">
+  <div class="category-header">
+    <h2>5. Writing Quality</h2>
+    <span class="pts-badge">20 pts</span>
+  </div>
+  <table>
+    <thead><tr><th>Score</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr class="tier-excellent"><td><span class="score-badge">20</span></td><td>Clear structure (intro, body, conclusion), logical flow, minimal errors</td></tr>
+      <tr class="tier-good"><td><span class="score-badge">16</span></td><td>Mostly clear with minor structural issues or a few grammar errors</td></tr>
+      <tr class="tier-adequate"><td><span class="score-badge">12</span></td><td>Readable but disorganized or frequent grammar issues</td></tr>
+      <tr class="tier-below"><td><span class="score-badge">8</span></td><td>Poorly organized and difficult to follow</td></tr>
+      <tr class="tier-poor"><td><span class="score-badge">4</span></td><td>Mostly incoherent but some content is discernible</td></tr>
+      <tr class="tier-poor"><td><span class="score-badge">0</span></td><td>Incoherent or unreadable</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Credible References -->
+<div class="refs-section">
+  <h2>What Counts as a Credible Reference?</h2>
+  <p class="refs-note">Course lecture slides count as one reference regardless of how many slide decks are cited.</p>
+  <div class="refs-grid">
+    <div class="ref-box credible">
+      <p class="label">Credible</p>
+      <ul>
+        <li>Peer-reviewed journal articles</li>
+        <li>Textbooks (incl. Serjeant's <em>Observational Cosmology</em>)</li>
+        <li>NASA / ESA / JAXA official pages</li>
+        <li>ArXiv preprints</li>
+        <li>Course lecture notes / slides</li>
+        <li>PBS Space Time videos</li>
+      </ul>
+    </div>
+    <div class="ref-box not-credible">
+      <p class="label">Not Credible (on their own)</p>
+      <ul>
+        <li>Wikipedia (OK only as supplementary)</li>
+        <li>Anime wiki pages</li>
+        <li>Personal blogs</li>
+        <li>AI-generated summaries</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Grade Scale -->
+<div class="grade-section">
+  <h2>Overall Grade Scale</h2>
+  <div class="grade-row">
+    <div class="grade-cell g-excellent"><div class="range">85 &ndash; 100</div><div class="label">Excellent</div></div>
+    <div class="grade-cell g-good"><div class="range">70 &ndash; 84</div><div class="label">Good</div></div>
+    <div class="grade-cell g-adequate"><div class="range">55 &ndash; 69</div><div class="label">Adequate</div></div>
+    <div class="grade-cell g-below"><div class="range">40 &ndash; 54</div><div class="label">Below Expectations</div></div>
+    <div class="grade-cell g-insufficient"><div class="range">0 &ndash; 39</div><div class="label">Insufficient</div></div>
+  </div>
+</div>
+
+<p class="footer">Observational Cosmology &middot; NTHU</p>
+
+</body>
+</html>
