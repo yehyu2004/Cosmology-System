@@ -250,6 +250,54 @@
       border-radius: 8px;
     }
     .rules-list li strong { color: #1e293b; }
+
+    /* Student rubric table */
+    .rubric-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    .rubric-table thead th {
+      background: #f1f5f9;
+      font-weight: 700;
+      text-align: left;
+      padding: 0.6rem 0.75rem;
+      border-bottom: 2px solid #e2e8f0;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #475569;
+    }
+    .rubric-table tbody td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: top;
+    }
+    .rubric-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    .rubric-table .cat-label {
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .rubric-table .pts {
+      font-weight: 700;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .rubric-table .tier-cell {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+    .rubric-table .tier-cell span {
+      font-weight: 600;
+      color: #1e293b;
+    }
   </style>
 </head>
 <body>
@@ -305,6 +353,55 @@
       <div style="width:10%;text-align:center;">Refs</div>
       <div style="width:20%;text-align:center;">Writing</div>
     </div>
+  </section>
+
+  <!-- Student rubric table -->
+  <section>
+    <h2>Student Rubric</h2>
+    <p class="section-desc">Share this table with students so they know exactly what a strong report looks like.</p>
+
+    <table class="rubric-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th style="text-align:center;">Points</th>
+          <th>What we're looking for</th>
+          <th>How to get full marks</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="cat-label" style="color:#3b82f6;">Anime Introduction</td>
+          <td class="pts" style="color:#3b82f6;">10</td>
+          <td>Show genuine familiarity with the anime or sci-fi work you chose.</td>
+          <td class="tier-cell"><span>Name the work</span>, summarize the plot in 3+ sentences, and identify themes relevant to cosmology.</td>
+        </tr>
+        <tr>
+          <td class="cat-label" style="color:#8b5cf6;">Cosmology-Anime Connection</td>
+          <td class="pts" style="color:#8b5cf6;">30</td>
+          <td>Tie specific cosmological concepts to specific scenes in the anime.</td>
+          <td class="tier-cell"><span>Identify 3+ cosmological concepts</span> with concrete scene references (e.g., episode, timestamp, or plot moment).</td>
+        </tr>
+        <tr>
+          <td class="cat-label" style="color:#ec4899;">Cosmological Concepts</td>
+          <td class="pts" style="color:#ec4899;">30</td>
+          <td>Explain real cosmology accurately, going beyond what the anime shows.</td>
+          <td class="tier-cell"><span>Explain 3+ concepts accurately</span> with depth beyond anime-level discussion. Course material, textbook depth, or quantitative examples are a bonus.</td>
+        </tr>
+        <tr>
+          <td class="cat-label" style="color:#f59e0b;">References</td>
+          <td class="pts" style="color:#f59e0b;">10</td>
+          <td>Cite credible cosmology/astronomy sources (journals, textbooks, NASA, ArXiv).</td>
+          <td class="tier-cell"><span>3+ credible references</span>, properly cited. Wikipedia alone doesn't count; pair it with a credible source. Course lecture slides count as one reference.</td>
+        </tr>
+        <tr>
+          <td class="cat-label" style="color:#10b981;">Writing Quality</td>
+          <td class="pts" style="color:#10b981;">20</td>
+          <td>Write a well-structured, clear, and readable report.</td>
+          <td class="tier-cell"><span>Clear structure</span> (intro, body, conclusion), <span>logical flow</span> between sections, and minimal grammar/spelling errors.</td>
+        </tr>
+      </tbody>
+    </table>
   </section>
 
   <!-- Detailed rubric -->
