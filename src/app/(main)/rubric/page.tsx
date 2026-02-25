@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { CATEGORY_META } from "@/lib/grading-rubric";
 
 /* ── tier data for each category ── */
@@ -80,11 +82,19 @@ function scoreBadge(score: number, max: number): string {
 export default function RubricPage() {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-8">
-      <div>
+      <div className="flex items-center gap-3">
+        <Link
+          href="/assignments"
+          className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </Link>
+        <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Grading Rubric</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
           Your report is scored across 5 categories for a total of 100 points. Between two tiers, the lower score is used.
         </p>
+        </div>
       </div>
 
       {/* ── Point distribution bar ── */}
