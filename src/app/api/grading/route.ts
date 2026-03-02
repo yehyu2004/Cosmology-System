@@ -153,12 +153,12 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Failed to extract text from PDF" }, { status: 500 });
   }
 
-  if (!reportText.trim()) {
-    return NextResponse.json({ error: "Could not extract text from PDF. The file may be scanned or image-only." }, { status: 400 });
-  }
-
   // Convert PDF pages to images for vision-based grading (non-blocking on failure)
   const pageImageUrls = await pdfToImages(pdfBuffer);
+
+  if (!reportText.trim() && pageImageUrls.length === 0) {
+    return NextResponse.json({ error: "Could not extract text or images from PDF." }, { status: 400 });
+  }
 
   const result = await aiGradeReport({
     assignmentTitle: submission.assignment.title,
