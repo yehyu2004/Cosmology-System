@@ -71,6 +71,7 @@ export async function aiGradeReport({
   maxPoints,
   reportText,
   pageImageUrls,
+  pdfBase64,
 }: {
   assignmentTitle: string;
   assignmentDescription: string | null;
@@ -78,6 +79,7 @@ export async function aiGradeReport({
   maxPoints: number;
   reportText: string;
   pageImageUrls?: string[];
+  pdfBase64?: string;
 }): Promise<AIGradingResult | null> {
   const effectiveRubric = rubric?.trim() || DEFAULT_RUBRIC;
 
@@ -113,6 +115,14 @@ ${FEEDBACK_FORMAT}`;
         detail: "low",
       });
     }
+  }
+
+  // Send raw PDF as file input so the model can see figures/charts directly
+  if (pdfBase64) {
+    userContent.push({
+      type: "input_file",
+      file_data: `data:application/pdf;base64,${pdfBase64}`,
+    } as OpenAI.Responses.ResponseInputContent);
   }
 
   const response = await openai.responses.create({

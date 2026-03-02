@@ -156,9 +156,8 @@ export async function PUT(req: Request) {
   // Convert PDF pages to images for vision-based grading (non-blocking on failure)
   const pageImageUrls = await pdfToImages(pdfBuffer);
 
-  if (!reportText.trim() && pageImageUrls.length === 0) {
-    return NextResponse.json({ error: "Could not extract text or images from PDF." }, { status: 400 });
-  }
+  // Send PDF as base64 file input so the model can see figures/charts directly
+  const pdfBase64 = pdfBuffer.toString("base64");
 
   const result = await aiGradeReport({
     assignmentTitle: submission.assignment.title,
@@ -167,6 +166,7 @@ export async function PUT(req: Request) {
     maxPoints: Number(submission.assignment.totalPoints),
     reportText,
     pageImageUrls,
+    pdfBase64,
   });
 
   if (!result) {
