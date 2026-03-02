@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ["pdf-parse", "pdfjs-dist", "@napi-rs/canvas"],
+    serverComponentsExternalPackages: ["mupdf", "pdf-parse", "pdfjs-dist", "@napi-rs/canvas"],
   },
   async headers() {
     return [
