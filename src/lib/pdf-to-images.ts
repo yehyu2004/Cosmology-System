@@ -1,17 +1,20 @@
-import { createCanvas } from "@napi-rs/canvas";
-
 /**
  * Convert a PDF buffer into an array of base64 JPEG data-URL strings,
  * one per page. Uses pdfjs-dist for parsing and @napi-rs/canvas for rendering.
  *
  * Returns an empty array on any failure so grading can fall back to text-only.
+ * @napi-rs/canvas is a native module that may not be available on all platforms
+ * (e.g. Vercel serverless), so both imports are dynamic.
  */
 export async function pdfToImages(
   buffer: Buffer,
   maxPages = 25,
 ): Promise<string[]> {
   try {
-    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    const [{ createCanvas }, pdfjsLib] = await Promise.all([
+      import("@napi-rs/canvas"),
+      import("pdfjs-dist/legacy/build/pdf.mjs"),
+    ]);
 
     const data = new Uint8Array(buffer);
     const doc = await pdfjsLib.getDocument({ data, useSystemFonts: true })
