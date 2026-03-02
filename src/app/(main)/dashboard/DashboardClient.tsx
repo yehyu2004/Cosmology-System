@@ -154,13 +154,13 @@ export default function DashboardClient({
       icon: BookOpen,
       roles: ["STUDENT", "TA", "PROFESSOR", "ADMIN"],
     },
-    {
-      label: "Simulations",
-      description: "Interactive demos",
-      href: "/simulations",
-      icon: Telescope,
-      roles: ["STUDENT", "TA", "PROFESSOR", "ADMIN"],
-    },
+    // {
+    //   label: "Simulations",
+    //   description: "Interactive demos",
+    //   href: "/simulations",
+    //   icon: Telescope,
+    //   roles: ["STUDENT", "TA", "PROFESSOR", "ADMIN"],
+    // },
     {
       label: "Create Assignment",
       description: "New report task",

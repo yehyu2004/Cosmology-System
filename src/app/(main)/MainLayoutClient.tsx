@@ -40,7 +40,7 @@ interface MainLayoutClientProps {
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: null },
   { href: "/assignments", label: "Assignments", icon: FileText, roles: null },
-  { href: "/simulations", label: "Simulations", icon: FlaskConical, roles: null },
+  // { href: "/simulations", label: "Simulations", icon: FlaskConical, roles: null },
   { href: "/grading", label: "Grading", icon: ClipboardCheck, roles: ["TA", "PROFESSOR", "ADMIN"] },
   { href: "/grades", label: "My Grades", icon: GraduationCap, roles: ["STUDENT"] },
   { href: "/admin/users", label: "Users", icon: Users, roles: ["TA", "PROFESSOR", "ADMIN"] },
