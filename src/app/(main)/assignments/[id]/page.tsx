@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { toFileApiUrl } from "@/lib/file-url";
 
 interface Assignment {
   id: string;
@@ -33,7 +34,7 @@ interface Submission {
   returnedAt: string | null;
 }
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+const MAX_FILE_SIZE = 4.5 * 1024 * 1024; // 4.5 MB (Vercel Hobby limit)
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -51,6 +52,7 @@ export default function AssignmentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<{ name: string; size: number } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [unsubmitting, setUnsubmitting] = useState(false);
 
   const isStaff = ["TA", "PROFESSOR", "ADMIN"].includes(userRole);
 
@@ -70,7 +72,7 @@ export default function AssignmentDetailPage() {
     if (!file || !assignment) return;
 
     if (file.size > MAX_FILE_SIZE) {
-      toast.error(`File is too large (${formatFileSize(file.size)}). Maximum size is 20 MB.`);
+      toast.error(`File is too large (${formatFileSize(file.size)}). Maximum size is 4.5 MB.`);
       e.target.value = "";
       return;
     }
@@ -110,6 +112,34 @@ export default function AssignmentDetailPage() {
       toast.error("Upload failed");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleUnsubmit() {
+    if (!assignment) return;
+    const confirmed = window.confirm(
+      "Withdraw your submission?\n\nThis will remove your uploaded report. You can submit again later."
+    );
+    if (!confirmed) return;
+    setUnsubmitting(true);
+    try {
+      const res = await fetch("/api/submissions", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignmentId: assignment.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to unsubmit");
+        return;
+      }
+      setSubmission(null);
+      toast.success("Submission withdrawn");
+    } catch (err) {
+      console.error("[submission:unsubmit]", { error: err instanceof Error ? err.message : String(err) });
+      toast.error("Failed to unsubmit");
+    } finally {
+      setUnsubmitting(false);
     }
   }
 
@@ -217,7 +247,7 @@ export default function AssignmentDetailPage() {
                     </p>
                   </div>
                   {submission.fileUrl && (
-                    <Link href={submission.fileUrl} target="_blank">
+                    <Link href={toFileApiUrl(submission.fileUrl)} target="_blank">
                       <Button variant="outline" size="sm">View</Button>
                     </Link>
                   )}
@@ -255,27 +285,39 @@ export default function AssignmentDetailPage() {
                   </p>
                 ) : (
                   <div>
-                    <label className="cursor-pointer">
-                      <Button variant="outline" size="sm" disabled={uploading} asChild>
-                        <span>
-                          <Upload className="w-4 h-4 mr-2" />
-                          {uploading ? "Uploading..." : "Re-upload"}
-                        </span>
+                    <div className="flex items-center gap-2">
+                      <label className="cursor-pointer">
+                        <Button variant="outline" size="sm" disabled={uploading || unsubmitting} asChild>
+                          <span>
+                            <Upload className="w-4 h-4 mr-2" />
+                            {uploading ? "Uploading..." : "Re-upload"}
+                          </span>
+                        </Button>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          className="hidden"
+                          onChange={handleUpload}
+                          disabled={uploading || unsubmitting}
+                        />
+                      </label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={uploading || unsubmitting}
+                        onClick={handleUnsubmit}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {unsubmitting ? "Withdrawing..." : "Unsubmit"}
                       </Button>
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        className="hidden"
-                        onChange={handleUpload}
-                        disabled={uploading}
-                      />
-                    </label>
+                    </div>
                     {selectedFile && uploading && (
                       <p className="text-xs text-gray-500 mt-1">
                         {selectedFile.name} ({formatFileSize(selectedFile.size)})
                       </p>
                     )}
-                    <p className="text-xs text-gray-400 mt-1">PDF only &middot; Max 20 MB</p>
+                    <p className="text-xs text-gray-400 mt-1">PDF only &middot; Max 4.5 MB</p>
                   </div>
                 )}
               </div>
@@ -303,7 +345,7 @@ export default function AssignmentDetailPage() {
                     {selectedFile.name} ({formatFileSize(selectedFile.size)})
                   </p>
                 )}
-                <p className="text-xs text-gray-400 mt-2">PDF only &middot; Max 20 MB</p>
+                <p className="text-xs text-gray-400 mt-2">PDF only &middot; Max 4.5 MB</p>
               </div>
             )}
           </CardContent>

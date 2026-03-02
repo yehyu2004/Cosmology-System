@@ -1,29 +1,23 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
-  pgPool: Pool | undefined;
 };
 
 function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL!;
-  const pool = globalForPrisma.pgPool ?? new Pool({
-    connectionString,
-    min: 2,
-    max: 10,
-    idleTimeoutMillis: 60_000,
-  });
-  if (process.env.NODE_ENV !== "production") globalForPrisma.pgPool = pool;
-  const adapter = new PrismaPg(pool);
-  return new PrismaClient({
-    adapter,
+  const url = process.env.DATABASE_URL ?? "";
+  const isLocal = url.includes("localhost") || url.includes("127.0.0.1");
+  const opts: ConstructorParameters<typeof PrismaClient>[0] = {
     log:
       process.env.NODE_ENV === "development"
         ? ["warn", "error"]
         : ["error"],
-  });
+  };
+  if (!isLocal) {
+    opts.adapter = new PrismaNeon({ connectionString: url });
+  }
+  return new PrismaClient(opts);
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();

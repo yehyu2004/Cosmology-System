@@ -13,8 +13,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "assignmentId and fileUrl are required" }, { status: 400 });
   }
 
-  // Validate fileUrl points to an uploaded file
-  if (typeof fileUrl !== "string" || !/^\/uploads\/\d+-[\w._-]+\.pdf$/i.test(fileUrl)) {
+  // Validate fileUrl is an R2 key
+  if (typeof fileUrl !== "string" || !/^submissions\/\d+-[\w._-]+\.pdf$/i.test(fileUrl)) {
     return NextResponse.json({ error: "Invalid file URL" }, { status: 400 });
   }
 
@@ -68,4 +68,43 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ data: submission }, { status: 201 });
+}
+
+export async function DELETE(req: Request) {
+  const auth = await requireApiAuth();
+  if (isErrorResponse(auth)) return auth;
+
+  const body = await req.json();
+  const { assignmentId } = body;
+
+  if (!assignmentId) {
+    return NextResponse.json({ error: "assignmentId is required" }, { status: 400 });
+  }
+
+  const existing = await prisma.submission.findUnique({
+    where: {
+      assignmentId_userId: {
+        assignmentId,
+        userId: auth.user.id,
+      },
+    },
+    select: { id: true, gradedAt: true },
+  });
+
+  if (!existing) {
+    return NextResponse.json({ error: "No submission found" }, { status: 404 });
+  }
+
+  if (existing.gradedAt) {
+    return NextResponse.json(
+      { error: "Cannot unsubmit — assignment has been graded. Ask your TA to return it." },
+      { status: 403 }
+    );
+  }
+
+  await prisma.submission.delete({
+    where: { id: existing.id },
+  });
+
+  return NextResponse.json({ success: true });
 }

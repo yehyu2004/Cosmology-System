@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { toast } from "sonner";
+import { toFileApiUrl } from "@/lib/file-url";
 import {
   Sparkles,
   CheckCircle2,
@@ -709,7 +710,7 @@ export default function GradingPage() {
                     {/* Student Report File */}
                     {selectedSubmission.fileUrl && (
                       <a
-                        href={selectedSubmission.fileUrl}
+                        href={toFileApiUrl(selectedSubmission.fileUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors group"

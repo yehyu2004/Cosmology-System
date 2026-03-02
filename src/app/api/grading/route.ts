@@ -4,8 +4,7 @@ import { requireApiRole, isErrorResponse } from "@/lib/api-auth";
 import { aiGradeReport } from "@/lib/ai";
 import { pdfToImages } from "@/lib/pdf-to-images";
 import { z } from "zod";
-import fs from "fs";
-import path from "path";
+import { getFromR2 } from "@/lib/r2";
 
 // Simple in-memory rate limiter for AI grading (per user, 5 requests per minute)
 const aiRateLimit = new Map<string, number[]>();
@@ -130,15 +129,9 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "No file uploaded for this submission" }, { status: 400 });
   }
 
-  const filePath = path.resolve(process.cwd(), "public", submission.fileUrl.replace(/^\//, ""));
-  const publicDir = path.resolve(process.cwd(), "public");
-  if (!filePath.startsWith(publicDir + path.sep)) {
-    return NextResponse.json({ error: "Invalid file path" }, { status: 400 });
-  }
-
   let pdfBuffer: Buffer;
   try {
-    pdfBuffer = fs.readFileSync(filePath);
+    pdfBuffer = await getFromR2(submission.fileUrl);
   } catch (err) {
     console.error("[grading:read-file]", { submissionId, error: err instanceof Error ? err.message : String(err) });
     return NextResponse.json({ error: "Failed to read PDF file" }, { status: 500 });
