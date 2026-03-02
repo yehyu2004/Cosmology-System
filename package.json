@@ -8,10 +8,12 @@
     "start": "next start",
     "lint": "next lint"
   },
+  "optionalDependencies": {
+    "@napi-rs/canvas": "^0.1.95"
+  },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@aws-sdk/client-s3": "^3.1000.0",
-    "@napi-rs/canvas": "^0.1.95",
     "@neondatabase/serverless": "^1.0.2",
     "@prisma/adapter-neon": "^7.4.2",
     "@prisma/client": "^6.19.2",
