@@ -1,62 +1,45 @@
-import {
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
-} from "@aws-sdk/client-s3";
+import { put, del } from "@vercel/blob";
 import { promises as fs } from "fs";
 import path from "path";
 
-const useR2 = !!(
-  process.env.R2_ACCOUNT_ID &&
-  process.env.R2_ACCESS_KEY_ID &&
-  process.env.R2_SECRET_ACCESS_KEY &&
-  process.env.R2_BUCKET_NAME
-);
+const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
 
 const LOCAL_STORAGE_DIR = path.join(process.cwd(), "storage");
-
-function getS3() {
-  return new S3Client({
-    region: "auto",
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-    },
-  });
-}
 
 export async function uploadToR2(
   buffer: Buffer,
   key: string,
   contentType: string,
-): Promise<void> {
-  if (useR2) {
-    await getS3().send(
-      new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME!,
-        Key: key,
-        Body: buffer,
-        ContentType: contentType,
-      }),
-    );
+): Promise<string> {
+  if (useBlob) {
+    const blob = await put(key, buffer, {
+      access: "private",
+      contentType,
+      addRandomSuffix: false,
+    });
+    return blob.url;
   } else {
     const filePath = path.join(LOCAL_STORAGE_DIR, key);
     await fs.mkdir(path.dirname(filePath), { recursive: true });
     await fs.writeFile(filePath, buffer);
+    return key;
   }
 }
 
 export async function getFromR2(key: string): Promise<Buffer> {
-  if (useR2) {
-    const res = await getS3().send(
-      new GetObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME!,
-        Key: key,
-      }),
-    );
-    const bytes = await res.Body!.transformToByteArray();
-    return Buffer.from(bytes);
+  if (useBlob) {
+    // key is a full Vercel Blob URL when using blob storage
+    const url = key.startsWith("http") ? key : key;
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`,
+      },
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch blob: ${res.status} ${res.statusText}`);
+    }
+    const arrayBuffer = await res.arrayBuffer();
+    return Buffer.from(arrayBuffer);
   } else {
     // New uploads go to storage/submissions/...
     const filePath = path.join(LOCAL_STORAGE_DIR, key);
@@ -69,5 +52,14 @@ export async function getFromR2(key: string): Promise<Buffer> {
       }
       throw new Error(`File not found: ${key}`);
     }
+  }
+}
+
+export async function deleteFromStorage(key: string): Promise<void> {
+  if (useBlob) {
+    await del(key);
+  } else {
+    const filePath = path.join(LOCAL_STORAGE_DIR, key);
+    await fs.unlink(filePath).catch(() => {});
   }
 }

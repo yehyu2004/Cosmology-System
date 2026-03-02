@@ -40,11 +40,11 @@ export async function POST(req: Request) {
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const key = `submissions/${timestamp}-${safeName}`;
 
-  await uploadToR2(buffer, key, "application/pdf");
+  const storedUrl = await uploadToR2(buffer, key, "application/pdf");
 
   return NextResponse.json({
     data: {
-      url: key,
+      url: storedUrl,
       name: file.name,
     },
   });
