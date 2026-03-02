@@ -8,7 +8,6 @@ import {
   Clock,
   BookOpen,
   PlusCircle,
-  Telescope,
   ClipboardCheck,
   BarChart3,
   AlertCircle,

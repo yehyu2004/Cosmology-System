@@ -9,7 +9,6 @@ import {
   Telescope,
   LayoutDashboard,
   FileText,
-  FlaskConical,
   ClipboardCheck,
   GraduationCap,
   Settings,
