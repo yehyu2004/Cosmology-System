@@ -538,8 +538,8 @@ export default function GradingPage() {
           {/* Submission List */}
           {!sidebarCollapsed ? (
           <div className="w-full md:w-80 shrink-0 flex flex-col bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm max-h-[40vh] md:max-h-none">
-            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-              <div>
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2">
+              <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                   Submissions ({filteredSubmissions.length})
                 </h2>
@@ -551,7 +551,7 @@ export default function GradingPage() {
               </div>
               <button
                 onClick={() => setSidebarCollapsed(true)}
-                className="hidden md:flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="hidden md:flex items-center justify-center w-7 h-7 shrink-0 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 title="Hide submissions list"
               >
                 <PanelLeftClose className="w-4 h-4" />
