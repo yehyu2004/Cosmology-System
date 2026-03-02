@@ -1,4 +1,4 @@
-import { put, del } from "@vercel/blob";
+import { put, del, get } from "@vercel/blob";
 import { promises as fs } from "fs";
 import path from "path";
 
@@ -27,20 +27,21 @@ export async function uploadToR2(
 }
 
 export async function getFromR2(key: string): Promise<Buffer> {
-  if (useBlob) {
-    // key is a full Vercel Blob URL when using blob storage
-    const url = key.startsWith("http") ? key : key;
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`,
-      },
-    });
-    if (!res.ok) {
-      throw new Error(`Failed to fetch blob: ${res.status} ${res.statusText}`);
+  if (useBlob && key.startsWith("http")) {
+    const res = await get(key, { access: "private" });
+    if (!res || res.statusCode === 304) {
+      throw new Error(`Blob not found: ${key}`);
     }
-    const arrayBuffer = await res.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-  } else {
+    const reader = res.stream.getReader();
+    const chunks: Uint8Array[] = [];
+    let done = false;
+    while (!done) {
+      const result = await reader.read();
+      done = result.done;
+      if (result.value) chunks.push(result.value);
+    }
+    return Buffer.concat(chunks);
+  } else if (!useBlob) {
     // New uploads go to storage/submissions/...
     const filePath = path.join(LOCAL_STORAGE_DIR, key);
     try {
@@ -52,6 +53,8 @@ export async function getFromR2(key: string): Promise<Buffer> {
       }
       throw new Error(`File not found: ${key}`);
     }
+  } else {
+    throw new Error(`Cannot fetch non-URL key without local storage: ${key}`);
   }
 }
 
