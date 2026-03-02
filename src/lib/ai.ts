@@ -121,8 +121,9 @@ ${FEEDBACK_FORMAT}`;
   if (pdfBase64) {
     userContent.push({
       type: "input_file",
+      filename: "report.pdf",
       file_data: `data:application/pdf;base64,${pdfBase64}`,
-    } as OpenAI.Responses.ResponseInputContent);
+    } as unknown as OpenAI.Responses.ResponseInputContent);
   }
 
   const response = await openai.responses.create({
